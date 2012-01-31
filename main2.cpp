@@ -109,24 +109,11 @@ enum
 {
     INDEX_GRID = 0,
     VERTEX_GRID,
-//    TF_PARTICLES_PING,
-//    TF_PARTICLES_PONG,
-//    VERTEX_SAMPLING_GRID,
-//    INDEX_SAMPLING_GRID,
 
     MAX
 };
 }   // namespace buffer
 
-namespace query
-{
-enum
-{
-	PARTCILE_GEN,
-	PARTICLE_UPDATE,
-	MAX
-};
-}
 
 namespace program
 {
@@ -161,7 +148,6 @@ GLuint      rbuffers[rbuffer::MAX];
 GLuint      fbuffers[fbuffer::MAX];
 GLuint      textures[texture::MAX];
 GLuint      buffers[buffer::MAX];
-GLuint      queries[query::MAX];
 Program*    programs[program::MAX];
 
 } // namespace gl
@@ -247,17 +233,6 @@ int fftPass = 0;
 
 // Foam
 float jacobian_scale = -0.1f;//1.20f;
-bool renderJacobians = false;
-int foamPass = 0;
-float foamZmin = 3.23f;
-float foamZmax = 8.70f;
-float foamLifetime = 20.0f;
-bool spume = false;
-float displacer = 0.0f;
-const int TILE_COUNT = 8;	// must be a pot
-
-// Particles
-float frustumScale = 0.0f;//0.2f;
 
 } // namespace
 
@@ -1142,7 +1117,6 @@ void save(int id)
     out << choppy_factor2 << std::endl;
     out << choppy_factor3 << std::endl;
     out << jacobian_scale << std::endl;
-    out << foamLifetime << std::endl;
     out.close();
 }
 
@@ -1196,7 +1170,6 @@ void load(int id)
     in >> choppy_factor2;
     in >> choppy_factor3;
     in >> jacobian_scale;
-    in >> foamLifetime;
     in.close();
     generateMesh();
     generateWavesSpectrum();
@@ -1291,59 +1264,60 @@ void redisplayFunc()
 	static double t0 = 0.0;
 	static double t1 = time();
 
-	t0 		= time();
-	float delta 	= t0 - t1;
+	t0          = time();
+	float delta = t0 - t1;
 
-    bencher += delta;
-    ++frames;
+	bencher += delta;
+	++frames;
 
 	camera::x += camera::vel * delta * camera::velx * max(camera::z*0.5f,1.0f);
 	camera::y += camera::vel * delta * camera::vely * max(camera::z*0.5f,1.0f);
 	camera::z += camera::vel * delta * camera::velz * max(camera::z*0.5f,1.0f);
-    if(camera::z  < 1.0)
-        camera::z = 1.0;
+	if(camera::z  < 1.0)
+		camera::z = 1.0;
 
-    if (vboParams.x != window::width || vboParams.y != window::height || vboParams.z != gridSize || vboParams.w != camera::theta)
-    {
-        generateMesh();
-        vboParams.x = window::width;
-        vboParams.y = window::height;
-        vboParams.z = gridSize;
-        vboParams.w = camera::theta;
-    }
+	if (vboParams.x != window::width || vboParams.y != window::height || vboParams.z != gridSize || vboParams.w != camera::theta)
+	{
+		generateMesh();
+		vboParams.x = window::width;
+		vboParams.y = window::height;
+		vboParams.z = gridSize;
+		vboParams.w = camera::theta;
+	}
 
-    glClearColor(1.0,1.0,1.0,1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(1.0,1.0,1.0,1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    vec4f sun = vec4f(sin(sunTheta) * cos(sunPhi), sin(sunTheta) * sin(sunPhi), cos(sunTheta), 0.0);
+	vec4f sun = vec4f(sin(sunTheta) * cos(sunPhi), sin(sunTheta) * sin(sunPhi), cos(sunTheta), 0.0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDisable(GL_DEPTH_TEST);
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::SKY]);
-    glViewport(0, 0, skyTexSize, skyTexSize);
-    glUseProgram(gl::programs[gl::program::SKYMAP]->program);
-    glUniform3f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "sunDir"), sun.x, sun.y, sun.z);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "octaves"), octaves);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "lacunarity"), lacunarity);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "gain"), gain);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "norm"), norm);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "clamp1"), clamp1);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "clamp2"), clamp2);
-    glUniform4f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "cloudsColor"), cloudColor[0], cloudColor[1], cloudColor[2], cloudColor[3]);
-    glBegin(GL_TRIANGLE_STRIP);
-    glVertex2f(-1, -1);
-    glVertex2f(1, -1);
-    glVertex2f(-1, 1);
-    glVertex2f(1, 1);
-    glEnd();
-    glActiveTexture(GL_TEXTURE0 + gl::texture::SKY);
-    glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::SKY]);
+	glViewport(0, 0, skyTexSize, skyTexSize);
+	glUseProgram(gl::programs[gl::program::SKYMAP]->program);
+	glUniform3f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "sunDir"), sun.x, sun.y, sun.z);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "octaves"), octaves);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "lacunarity"), lacunarity);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "gain"), gain);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "norm"), norm);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "clamp1"), clamp1);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "clamp2"), clamp2);
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "cloudsColor"), cloudColor[0], cloudColor[1], cloudColor[2], cloudColor[3]);
+	glBegin(GL_TRIANGLE_STRIP);
+	glVertex2f(-1, -1);
+	glVertex2f(1, -1);
+	glVertex2f(-1, 1);
+	glVertex2f(1, 1);
+	glEnd();
+	glActiveTexture(GL_TEXTURE0 + gl::texture::SKY);
+	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
 	// update wave heights
-    static double t = 0.0;
-    if(animate)
+	static double t = 0.0;
+	if(animate)
 		t += delta*speed;
+
 	// solve fft
     simulateFFTWaves(t);
 //    simulateFFTWaves2(t);
@@ -1364,9 +1338,11 @@ void redisplayFunc()
 	glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
 	float ch = camera::z;
-	static mat4f prevProj = mat4f::ZERO;
 
-    mat4f proj = mat4f::perspectiveProjection(camera::fovy, float(window::width) / float(window::height), 0.1 * ch, 300000.0 * ch);
+	mat4f proj = mat4f::perspectiveProjection(camera::fovy,
+	                                          float(window::width)/float(window::height),
+	                                          0.1 * ch,
+	                                          300000.0 * ch);
 
     mat4f view = mat4f(
                      0.0, -1.0, 0.0, -camera::x,
@@ -1377,35 +1353,13 @@ void redisplayFunc()
 
 
 	view = mat4f::rotatey(camera::phi) * view;
-    view = mat4f::rotatex(camera::theta) * view;
+	view = mat4f::rotatex(camera::theta) * view;
 
-	// scale view and projection transforms according to some metric
-	mat4f wview;
-	mat4f wproj;
-	scaleFrustum(frustumScale*ch, camera::fovy, float(window::width) / float(window::height), 0.1 * ch, 300000.0 * ch, view, wview, wproj);
 
-	static mat4f prevwview = mat4f::ZERO;
-	static mat4f prevwproj = mat4f::ZERO;
+	// compute foam
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
+	glViewport(0, 0, window::width, window::height);
 
-    static mat4f prevView = mat4f::ZERO;
-
-    mat4f dview = mat4f(
-                      view[0][0], view[0][1], view[0][2], 0.0,
-                      view[1][0], view[1][1], view[1][2], 0.0,
-                      view[2][0], view[2][1], view[2][2], 0.0,
-                      0.0, 0.0, 0.0, 1.0
-                  );
-
-    // compute foam
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
-    glViewport(0, 0, window::width, window::height);
-
-    GLenum drawBuffers_foam[1] =
-	{
-		GL_COLOR_ATTACHMENT0_EXT + 1 - foamPass,
-	};
-
-	glDrawBuffers(1, drawBuffers_foam);
 	float clear[] = {0.0,0.0,0.0,0.0};
 	glClearBufferfv(GL_COLOR,1,clear);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -1413,23 +1367,17 @@ void redisplayFunc()
 	glUseProgram(gl::programs[gl::program::FOAM]->program);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "fftWavesSampler"), gl::texture::FFT_PING);
 //	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevfftWavesSampler"), gl::texture::FFT_PING_0 + fftPass);
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invProjection"), 1, true, wproj.inverse().coefficients());
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invView"), 1, true, wview.inverse().coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invProjection"), 1, true, proj.inverse().coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invView"), 1, true, view.inverse().coefficients());
 //	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "view"), 1, true, cam2d.coefficients());
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "mvp"), 1, true, (wproj * wview).coefficients());
-	glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldPos"), wview.inverse()[0][3], wview.inverse()[1][3], wview.inverse()[2][3]);
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "mvp"), 1, true, (proj * view).coefficients());
+	glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldPos"), view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
 	glUniform2f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gridSize"), gridSize / float(window::width), gridSize / float(window::height));
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "jacobian_scale"), jacobian_scale);
 
-//	if(animate)
-//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "delta"), max(speed*(t0-t1),0.0));
-//	else
-//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "delta"), 0.0f);
 
-
-//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_GRID]);
 	glVertexPointer(4, GL_FLOAT, 16, 0);
@@ -1442,23 +1390,23 @@ void redisplayFunc()
 	glViewport(0, 0, window::width, window::height);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    if (show_spectrum)
-    {
-        glUseProgram(gl::programs[gl::program::SHOW_SPECTRUM]->program);
-        glUniform4f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "INVERSE_GRID_SIZES"),
-                    M_PI * FFT_SIZE / GRID1_SIZE,
-                    M_PI * FFT_SIZE / GRID2_SIZE,
-                    M_PI * FFT_SIZE / GRID3_SIZE,
-                    M_PI * FFT_SIZE / GRID4_SIZE);
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "FFT_SIZE"), FFT_SIZE);
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "zoom"), show_spectrum_zoom);
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "linear"), show_spectrum_linear);
-        drawQuad();
-        TwDraw();
-        glutSwapBuffers();
-        t1 = t0;
-        return;
-    }
+	if (show_spectrum)
+	{
+		glUseProgram(gl::programs[gl::program::SHOW_SPECTRUM]->program);
+		glUniform4f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "INVERSE_GRID_SIZES"),
+		            M_PI * FFT_SIZE / GRID1_SIZE,
+		            M_PI * FFT_SIZE / GRID2_SIZE,
+		            M_PI * FFT_SIZE / GRID3_SIZE,
+		            M_PI * FFT_SIZE / GRID4_SIZE);
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "FFT_SIZE"), FFT_SIZE);
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "zoom"), show_spectrum_zoom);
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "linear"), show_spectrum_linear);
+		drawQuad();
+		TwDraw();
+		glutSwapBuffers();
+		t1 = t0;
+		return;
+	}
 
 /// Final Rendering
 	glEnable(GL_DEPTH_TEST);
@@ -1467,13 +1415,11 @@ void redisplayFunc()
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "screenToCamera"), 1, true, proj.inverse().coefficients());
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "cameraToWorld"), 1, true, view.inverse().coefficients());
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldToScreen"), 1, true, (proj * view).coefficients());
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldToScreen2"), 1, true, (wproj * wview).coefficients());
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldDirToScreen"), 1, true, (proj * dview).coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldDirToScreen"), 1, true, (proj * view).coefficients());
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "modelView"), 1, true, view.coefficients());
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldCamera"),  view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldSunDir"), sun.x, sun.y, sun.z);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "hdrExposure"), hdrExposure);
-	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "displacer"), displacer);
 
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "seaColor"), seaColor[0] * seaColor[3], seaColor[1] * seaColor[3], seaColor[2] * seaColor[3]);
 
@@ -1484,7 +1430,6 @@ void redisplayFunc()
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "normals"), normals);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy"), choppy);
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy_factor"),choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
-//    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "jacobian_scale"), jacobian_scale);
 
 	if (grid)
 	{
@@ -1524,201 +1469,178 @@ void redisplayFunc()
 
 
 	/// render atmosphere (after scene -> use early Z !!)
-    glUseProgram(gl::programs[gl::program::SKY]->program);
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "screenToCamera"), 1, true, proj.inverse().coefficients());
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "cameraToWorld"), 1, true, view.inverse().coefficients());
-    glUniform3f(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "worldCamera"), 0.0f, 0.0f, ch);
-    glUniform3f(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "worldSunDir"), sun.x, sun.y, sun.z);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "hdrExposure"), hdrExposure);
-    glBegin(GL_TRIANGLE_STRIP);
-    glVertex2f(-1, -1);
-    glVertex2f(1, -1);
-    glVertex2f(-1, 1);
-    glVertex2f(1, 1);
-    glEnd();
+	glUseProgram(gl::programs[gl::program::SKY]->program);
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "screenToCamera"), 1, true, proj.inverse().coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "cameraToWorld"), 1, true, view.inverse().coefficients());
+	glUniform3f(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "worldCamera"), 0.0f, 0.0f, ch);
+	glUniform3f(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "worldSunDir"), sun.x, sun.y, sun.z);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "hdrExposure"), hdrExposure);
+	glBegin(GL_TRIANGLE_STRIP);
+	glVertex2f(-1, -1);
+	glVertex2f(1, -1);
+	glVertex2f(-1, 1);
+	glVertex2f(1, 1);
+	glEnd();
 
-    if (cloudLayer && camera::z < 3000.0)
-        drawClouds(sun, proj * view);
+	if (cloudLayer && camera::z < 3000.0)
+		drawClouds(sun, proj * view);
 
 
 	glUseProgram(0);
-//	if(animate)
-	foamPass = 1 - foamPass;
 
-	prevView = view;
-	prevProj = proj;
-	prevwview = wview;
-	prevwproj = wproj;
-
-    TwDraw();
-    glutSwapBuffers();
+	TwDraw();
+	glutSwapBuffers();
 
 	t1 = t0;
 }
 
-void perf()
-{
-    cout << "avg time : " << bencher*1000.0 / frames << " ms" << endl;
+void perf() {
+	cout << "avg time : " << bencher*1000.0 / frames << " ms" << endl;
 }
 
-void reshapeFunc(int x, int y)
-{
-    window::width = x;
-    window::height = y;
-    TwWindowSize(x, y);
-    glutPostRedisplay();
+void reshapeFunc(int x, int y) {
+	window::width = x;
+	window::height = y;
+	TwWindowSize(x, y);
+	glutPostRedisplay();
 }
 
-void keyboardFunc(unsigned char c, int x, int y)
-{
+void keyboardFunc(unsigned char c, int x, int y) {
 	if (TwEventKeyboardGLUT(c, x, y))
-    {
-        return;
-    }
+	{
+		return;
+	}
 
 	if(c == 27)
-    {
-        ::exit(0);
-    }
-    if (c == '+')
-    {
-        camera::theta = min(camera::theta + 5.0f, 90.0f - 0.001f);
-    }
-    if (c == '-')
-    {
-        camera::theta = camera::theta - 5.0;
-        if(camera::theta < -45.0)
+	{
+		::exit(0);
+	}
+	if (c == '+')
+	{
+		camera::theta = min(camera::theta + 5.0f, 90.0f - 0.001f);
+	}
+	if (c == '-')
+	{
+		camera::theta = camera::theta - 5.0;
+		if(camera::theta < -45.0)
 			camera::theta = -45.0;
-    }
-    if (c >= '1' && c <= '9')
-    {
-        save(c - '0');
-    }
-    if (c == 'z')
-    {
-    	camera::vely = max(-1.0f, camera::vely - 1.0f);
-    }
-    if (c == 's')
-    {
-    	camera::vely = min(1.0f, camera::vely + 1.0f);
-    }
-    if (c == 'q')
-    {
-    	camera::velx = max(-1.0f, camera::velx - 1.0f);
-    }
-    if (c == 'd')
-    {
-    	camera::velx = min(1.0f, camera::velx + 1.0f);
-    }
-    if (c == 'e')
-    {
-    	camera::velz = max(-1.0f, camera::velz - 1.0f);
-    }
-    if (c == 'a')
-    {
-    	camera::velz = min(1.0f, camera::velz + 1.0f);
-    }
-}
-
-
-void keyboardUpFunc(unsigned char c, int x, int y)
-{
+	}
+	if (c >= '1' && c <= '9')
+	{
+		save(c - '0');
+	}
 	if (c == 'z')
-    {
-    	camera::vely = min(1.0f, camera::vely + 1.0f);
-    }
-    if (c == 's')
-    {
-    	camera::vely = max(-1.0f, camera::vely - 1.0f);
-    }
-    if (c == 'q')
-    {
-    	camera::velx = min(1.0f, camera::velx + 1.0f);
-    }
-    if (c == 'd')
-    {
-    	camera::velx = max(-1.0f, camera::velx - 1.0f);
-    }
-    if (c == 'e')
-    {
-    	camera::velz = min(1.0f, camera::velz + 1.0f);
-    }
-    if (c == 'a')
-    {
-    	camera::velz = max(-1.0f, camera::velz - 1.0f);
-    }
+	{
+		camera::vely = max(-1.0f, camera::vely - 1.0f);
+	}
+	if (c == 's')
+	{
+		camera::vely = min(1.0f, camera::vely + 1.0f);
+	}
+	if (c == 'q')
+	{
+		camera::velx = max(-1.0f, camera::velx - 1.0f);
+	}
+	if (c == 'd')
+	{
+		camera::velx = min(1.0f, camera::velx + 1.0f);
+	}
+	if (c == 'e')
+	{
+		camera::velz = max(-1.0f, camera::velz - 1.0f);
+	}
+	if (c == 'a')
+	{
+		camera::velz = min(1.0f, camera::velz + 1.0f);
+	}
 }
 
-void specialKeyFunc(int c, int x, int y)
-{
-    if (c >= GLUT_KEY_F1 && c <= GLUT_KEY_F9)
-    {
-        load(c - GLUT_KEY_F1 + 1);
-    }
-    switch (c)
-    {
-    case GLUT_KEY_LEFT:
-        camera::phi -= 5.0;
-        break;
-    case GLUT_KEY_RIGHT:
-        camera::phi += 5.0;
-        break;
-//    case GLUT_KEY_PAGE_UP:
-//        camera::height = min(8000.0f, camera::height * 1.1f);
-//        TwRefreshBar(tw::bar);
-//        break;
-//    case GLUT_KEY_PAGE_DOWN:
-//        camera::height = max(0.5f, camera::height / 1.1f);
-//        TwRefreshBar(tw::bar);
-//        break;
-    }
+
+void keyboardUpFunc(unsigned char c, int x, int y) {
+	if (c == 'z')
+	{
+		camera::vely = min(1.0f, camera::vely + 1.0f);
+	}
+	if (c == 's')
+	{
+		camera::vely = max(-1.0f, camera::vely - 1.0f);
+	}
+	if (c == 'q')
+	{
+		camera::velx = min(1.0f, camera::velx + 1.0f);
+	}
+	if (c == 'd')
+	{
+		camera::velx = max(-1.0f, camera::velx - 1.0f);
+	}
+	if (c == 'e')
+	{
+		camera::velz = min(1.0f, camera::velz + 1.0f);
+	}
+	if (c == 'a')
+	{
+		camera::velz = max(-1.0f, camera::velz - 1.0f);
+	}
+}
+
+void specialKeyFunc(int c, int x, int y) {
+	if (c >= GLUT_KEY_F1 && c <= GLUT_KEY_F9)
+	{
+		load(c - GLUT_KEY_F1 + 1);
+	}
+	switch (c)
+	{
+	case GLUT_KEY_LEFT:
+		camera::phi -= 5.0;
+		break;
+	case GLUT_KEY_RIGHT:
+		camera::phi += 5.0;
+		break;
+	}
 }
 
 int oldx;
 int oldy;
 bool drag;
 
-void mouseClickFunc(int b, int s, int x, int y)
-{
-    drag = false;
-    if (!TwEventMouseButtonGLUT(b, s, x, y) && b == 0)
-    {
-        oldx = x;
-        oldy = y;
-        drag = true;
-    }
+void mouseClickFunc(int b, int s, int x, int y) {
+	drag = false;
+	if (!TwEventMouseButtonGLUT(b, s, x, y) && b == 0)
+	{
+		oldx = x;
+		oldy = y;
+		drag = true;
+	}
 }
 
-void mouseMotionFunc(int x, int y)
-{
-    if (drag)
-    {
-        sunPhi += (oldx - x) / 400.0;
-        sunTheta += (y - oldy) / 400.0;
-        oldx = x;
-        oldy = y;
-    }
-    else
-    {
-        TwMouseMotion(x, y);
-    }
+void mouseMotionFunc(int x, int y) {
+	if (drag)
+	{
+		sunPhi += (oldx - x) / 400.0;
+		sunTheta += (y - oldy) / 400.0;
+		oldx = x;
+		oldy = y;
+	}
+	else
+	{
+		TwMouseMotion(x, y);
+	}
 }
 
-void mousePassiveMotionFunc(int x, int y)
-{
-    TwMouseMotion(x, y);
+void mousePassiveMotionFunc(int x, int y) {
+	TwMouseMotion(x, y);
 }
 
-void idleFunc()
-{
-    glutPostRedisplay();
+void idleFunc() {
+	glutPostRedisplay();
 }
 
-void onClean()
-{
+void onClean() {
 	GLenum error = glGetError();
 	if(error)
-		std::cout << "GL_ERROR : " << glu::errorString(error) << " during runtime\n";
+		std::cout << "GL_ERROR : "
+		          << glu::errorString(error)
+		          << " during runtime\n";
 
 	for(int i = 0; i < gl::program::MAX; ++i)
 		delete gl::programs[i];
@@ -1727,201 +1649,174 @@ void onClean()
 	glDeleteTextures(gl::texture::MAX, gl::textures);
 	glDeleteFramebuffersEXT(gl::fbuffer::MAX, gl::fbuffers);
 	glDeleteRenderbuffersEXT(gl::rbuffer::MAX, gl::rbuffers);
-	glDeleteQueries(gl::query::MAX, gl::queries);
 
 	glFinish();
 	error = glGetError();
 	if(error)
-		std::cout << "GL_ERROR : " << error << " : some objects might not have been cleaned...\n";
+		std::cout << "GL_ERROR : "
+		          << error
+		          << ": some objects might not have been cleaned...\n";
 	else
 		std::cout << "Exited Cleanly\n";
-
 }
 
-int main(int argc, char* argv[])
-{
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-    glutInitWindowSize(window::width, window::height);
-    glutCreateWindow("Ocean");
-    glutCreateMenu(NULL);
+int main(int argc, char* argv[]) {
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+	glutInitWindowSize(window::width, window::height);
+	glutCreateWindow("Ocean");
+	glutCreateMenu(NULL);
 
 //	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
 //	glutIgnoreKeyRepeat(1);
 
-    glutDisplayFunc(redisplayFunc);
-    glutReshapeFunc(reshapeFunc);
-    glutKeyboardFunc(keyboardFunc);
-    glutKeyboardUpFunc(keyboardUpFunc);
-    glutSpecialFunc(specialKeyFunc);
-    glutMouseFunc(mouseClickFunc);
-    glutMotionFunc(mouseMotionFunc);
-    glutPassiveMotionFunc(mousePassiveMotionFunc);
-    glutIdleFunc(idleFunc);
-    glewInit();
+	glutDisplayFunc(redisplayFunc);
+	glutReshapeFunc(reshapeFunc);
+	glutKeyboardFunc(keyboardFunc);
+	glutKeyboardUpFunc(keyboardUpFunc);
+	glutSpecialFunc(specialKeyFunc);
+	glutMouseFunc(mouseClickFunc);
+	glutMotionFunc(mouseMotionFunc);
+	glutPassiveMotionFunc(mousePassiveMotionFunc);
+	glutIdleFunc(idleFunc);
+	glewInit();
 
-    TwInit(TW_OPENGL, NULL);
-    TwGLUTModifiersFunc(glutGetModifiers);
+	TwInit(TW_OPENGL, NULL);
+	TwGLUTModifiersFunc(glutGetModifiers);
 
-    tw::bar = TwNewBar("Parameters");
-    TwDefine(" Parameters size='220 600' ");
+	tw::bar = TwNewBar("Parameters");
+	TwDefine(" Parameters size='220 600' ");
 
-    TwAddVarCB(tw::bar, "L1", TW_TYPE_FLOAT, setFloat, getFloat, &GRID1_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-    TwAddVarCB(tw::bar, "L2", TW_TYPE_FLOAT, setFloat, getFloat, &GRID2_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-    TwAddVarCB(tw::bar, "L3", TW_TYPE_FLOAT, setFloat, getFloat, &GRID3_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-    TwAddVarCB(tw::bar, "L4", TW_TYPE_FLOAT, setFloat, getFloat, &GRID4_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-    TwAddVarCB(tw::bar, "Wind speed", TW_TYPE_FLOAT, setFloat, getFloat, &WIND, "min=1.0 max=30.0 step=1.0 group=Spectrum");
-    TwAddVarCB(tw::bar, "Inv. wave age", TW_TYPE_FLOAT, setFloat, getFloat, &OMEGA, "min=0.84 max=4.99 step=0.01 group=Spectrum");
-    TwAddVarCB(tw::bar, "Propagate", TW_TYPE_BOOL8, setBool2, getBool2, &propagate, "group=Spectrum");
-    TwAddVarCB(tw::bar, "Amplitude", TW_TYPE_FLOAT, setFloat, getFloat, &A, "min=0.01 max=1000.0 step=0.01 group=Spectrum");
-    TwAddButton(tw::bar, "Generate", computeSlopeVarianceTex, NULL, "group=Spectrum");
+	TwAddVarCB(tw::bar, "L1", TW_TYPE_FLOAT, setFloat, getFloat, &GRID1_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
+	TwAddVarCB(tw::bar, "L2", TW_TYPE_FLOAT, setFloat, getFloat, &GRID2_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
+	TwAddVarCB(tw::bar, "L3", TW_TYPE_FLOAT, setFloat, getFloat, &GRID3_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
+	TwAddVarCB(tw::bar, "L4", TW_TYPE_FLOAT, setFloat, getFloat, &GRID4_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
+	TwAddVarCB(tw::bar, "Wind speed", TW_TYPE_FLOAT, setFloat, getFloat, &WIND, "min=1.0 max=30.0 step=1.0 group=Spectrum");
+	TwAddVarCB(tw::bar, "Inv. wave age", TW_TYPE_FLOAT, setFloat, getFloat, &OMEGA, "min=0.84 max=4.99 step=0.01 group=Spectrum");
+	TwAddVarCB(tw::bar, "Propagate", TW_TYPE_BOOL8, setBool2, getBool2, &propagate, "group=Spectrum");
+	TwAddVarCB(tw::bar, "Amplitude", TW_TYPE_FLOAT, setFloat, getFloat, &A, "min=0.01 max=1000.0 step=0.01 group=Spectrum");
+	TwAddButton(tw::bar, "Generate", computeSlopeVarianceTex, NULL, "group=Spectrum");
 
-    TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
-    TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
-    TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
-    TwAddVarRW(tw::bar, "Grid size", TW_TYPE_FLOAT, &gridSize, "min=1.0 max=16.0 step=1.0 group=Rendering");
-    TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Rendering");
-    TwAddVarRW(tw::bar, "Exposure", TW_TYPE_FLOAT, &hdrExposure, "min=0.01 max=4.0 step=0.01 group=Rendering");
-    TwAddVarRW(tw::bar, "Animation", TW_TYPE_BOOL8, &animate, "group=Rendering");
-    TwAddVarRW(tw::bar, "Speed", TW_TYPE_FLOAT, &speed, "group=Rendering min=-2.000 max=2.000 step=0.025");
-    TwAddVarRW(tw::bar, "Grid", TW_TYPE_BOOL8, &grid, "group=Rendering");
-    TwAddVarRW(tw::bar, "Spectrum_", TW_TYPE_BOOL8, &show_spectrum, "label=Spectrum group=Rendering");
-    TwAddVarRW(tw::bar, "Spectrum Zoom", TW_TYPE_FLOAT, &show_spectrum_zoom, "min=0.0 max=1.0 step=0.01 group=Rendering");
-    TwAddVarRW(tw::bar, "Spectrum Linear", TW_TYPE_BOOL8, &show_spectrum_linear, "group=Rendering");
-    TwAddVarRW(tw::bar, "Normals", TW_TYPE_BOOL8, &normals, "group=Rendering");
-    TwAddVarRW(tw::bar, "Choppy", TW_TYPE_BOOL8, &choppy, "group=Rendering");
-    TwAddVarRW(tw::bar, "ChoppyFactor0", TW_TYPE_FLOAT, &choppy_factor0, "min=0.0 max=100.0 step=0.1 group=Rendering");
-    TwAddVarRW(tw::bar, "ChoppyFactor1", TW_TYPE_FLOAT, &choppy_factor1, "min=0.0 max=100.0 step=0.1 group=Rendering");
-    TwAddVarRW(tw::bar, "ChoppyFactor3", TW_TYPE_FLOAT, &choppy_factor2, "min=0.0 max=100.0 step=0.1 group=Rendering");
-    TwAddVarRW(tw::bar, "ChoppyFactor4", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Rendering");
-    TwAddVarCB(tw::bar, "Sea", TW_TYPE_BOOL8, setBool, getBool, &seaContrib, "group=Rendering");
-    TwAddVarCB(tw::bar, "Sun", TW_TYPE_BOOL8, setBool, getBool, &sunContrib, "group=Rendering");
-    TwAddVarCB(tw::bar, "Sky", TW_TYPE_BOOL8, setBool, getBool, &skyContrib, "group=Rendering");
-    TwAddVarCB(tw::bar, "Whitecaps", TW_TYPE_BOOL8, setBool, getBool, &foamContrib, "group=Rendering");
-    TwAddVarRW(tw::bar, "Spume", TW_TYPE_BOOL8, &spume, "group=Rendering");
-    TwAddVarCB(tw::bar, "Manual filter", TW_TYPE_BOOL8, setBool, getBool, &manualFilter, "group=Rendering");
+	TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
+	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
+	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
+	TwAddVarRW(tw::bar, "Grid size", TW_TYPE_FLOAT, &gridSize, "min=1.0 max=16.0 step=1.0 group=Rendering");
+	TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Rendering");
+	TwAddVarRW(tw::bar, "Exposure", TW_TYPE_FLOAT, &hdrExposure, "min=0.01 max=4.0 step=0.01 group=Rendering");
+	TwAddVarRW(tw::bar, "Animation", TW_TYPE_BOOLCPP, &animate, "group=Rendering");
+	TwAddVarRW(tw::bar, "Speed", TW_TYPE_FLOAT, &speed, "group=Rendering min=-2.000 max=2.000 step=0.025");
+	TwAddVarRW(tw::bar, "Grid", TW_TYPE_BOOL8, &grid, "group=Rendering");
+	TwAddVarRW(tw::bar, "Spectrum_", TW_TYPE_BOOL8, &show_spectrum, "label=Spectrum group=Rendering");
+	TwAddVarRW(tw::bar, "Spectrum Zoom", TW_TYPE_FLOAT, &show_spectrum_zoom, "min=0.0 max=1.0 step=0.01 group=Rendering");
+	TwAddVarRW(tw::bar, "Spectrum Linear", TW_TYPE_BOOL8, &show_spectrum_linear, "group=Rendering");
+	TwAddVarRW(tw::bar, "Normals", TW_TYPE_BOOLCPP, &normals, "group=Rendering");
+	TwAddVarRW(tw::bar, "Choppy", TW_TYPE_BOOLCPP, &choppy, "group=Rendering");
+	TwAddVarRW(tw::bar, "ChoppyFactor0", TW_TYPE_FLOAT, &choppy_factor0, "min=0.0 max=100.0 step=0.1 group=Rendering");
+	TwAddVarRW(tw::bar, "ChoppyFactor1", TW_TYPE_FLOAT, &choppy_factor1, "min=0.0 max=100.0 step=0.1 group=Rendering");
+	TwAddVarRW(tw::bar, "ChoppyFactor3", TW_TYPE_FLOAT, &choppy_factor2, "min=0.0 max=100.0 step=0.1 group=Rendering");
+	TwAddVarRW(tw::bar, "ChoppyFactor4", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Rendering");
+	TwAddVarCB(tw::bar, "Sea", TW_TYPE_BOOLCPP, setBool, getBool, &seaContrib, "group=Rendering");
+	TwAddVarCB(tw::bar, "Sun", TW_TYPE_BOOLCPP, setBool, getBool, &sunContrib, "group=Rendering");
+	TwAddVarCB(tw::bar, "Sky", TW_TYPE_BOOLCPP, setBool, getBool, &skyContrib, "group=Rendering");
+	TwAddVarCB(tw::bar, "Whitecaps", TW_TYPE_BOOLCPP, setBool, getBool, &foamContrib, "group=Rendering");
+	TwAddVarCB(tw::bar, "Manual filter", TW_TYPE_BOOLCPP, setBool, getBool, &manualFilter, "group=Rendering");
 
-//    TwAddVarRW(tw::bar, "ChoppyC0", TW_TYPE_FLOAT, &c0, "min=0.0 max=150.0 step=0.01 group=Whitecap");
-//    TwAddVarRW(tw::bar, "ChoppyC1", TW_TYPE_FLOAT, &c1, "min=0.0 max=150.0 step=0.01 group=Whitecap");
-//    TwAddVarRW(tw::bar, "ChoppyC2", TW_TYPE_FLOAT, &c2, "min=0.0 max=150.0 step=0.01 group=Whitecap");
-//    TwAddVarRW(tw::bar, "ChoppyC3", TW_TYPE_FLOAT, &c3, "min=0.0 max=150.0 step=0.01 group=Whitecap");
-//    TwAddVarRW(tw::bar, "zmin0", TW_TYPE_FLOAT, &zmin0, "min=0.0 max=150.0 step=0.001 group=Whitecap");
-//    TwAddVarRW(tw::bar, "zmax0", TW_TYPE_FLOAT, &zmax0, "min=0.0 max=150.0 step=0.001 group=Whitecap");
-//	TwAddVarRW(tw::bar, "zmin1", TW_TYPE_FLOAT, &zmin1, "min=0.0 max=150.0 step=0.001 group=Whitecap");
-//    TwAddVarRW(tw::bar, "zmax1", TW_TYPE_FLOAT, &zmax1, "min=0.0 max=150.0 step=0.001 group=Whitecap");
-//    TwAddVarRW(tw::bar, "zmin2", TW_TYPE_FLOAT, &zmin2, "min=0.0 max=150.0 step=0.001 group=Whitecap");
-//    TwAddVarRW(tw::bar, "zmax2", TW_TYPE_FLOAT, &zmax2, "min=0.0 max=150.0 step=0.001 group=Whitecap");
-//    TwAddVarRW(tw::bar, "zmin3", TW_TYPE_FLOAT, &zmin3, "min=0.0 max=150.0 step=0.001 group=Whitecap");
-//    TwAddVarRW(tw::bar, "zmax3", TW_TYPE_FLOAT, &zmax3, "min=0.0 max=150.0 step=0.001 group=Whitecap");
+	TwAddVarRW(tw::bar, "JScale", TW_TYPE_FLOAT, &jacobian_scale, "min=-50.0 max=50.0 step=0.001 group=Whitecap");
 
-    TwAddVarRW(tw::bar, "JScale", TW_TYPE_FLOAT, &jacobian_scale, "min=-50.0 max=50.0 step=0.001 group=Whitecap");
-    TwAddVarRW(tw::bar, "JRender", TW_TYPE_BOOL8, &renderJacobians, "group=Whitecap");
-//    TwAddVarRW(tw::bar, "Enable0", TW_TYPE_BOOLCPP, &foam, "label=Enable group=Whitecap");
-//    TwAddVarRW(tw::bar, "Jmin", TW_TYPE_FLOAT, &foamJmin, "min=-20.0 max=20.0 step=0.1 group=Whitecap");
-//    TwAddVarRW(tw::bar, "Jmax", TW_TYPE_FLOAT, &foamJmax, "min=-20.0 max=20.0 step=0.1 group=Whitecap");
-    TwAddVarRW(tw::bar, "Zmin", TW_TYPE_FLOAT, &foamZmin, "min=1.0 max=100.0 step=1.0 group=Whitecap");
-    TwAddVarRW(tw::bar, "Zmax", TW_TYPE_FLOAT, &foamZmax, "min=-10.0 max=10.0 step=0.01 group=Whitecap");
-    TwAddVarRW(tw::bar, "Lifetime", TW_TYPE_FLOAT, &foamLifetime, "min=0.10 max=40.0 step=0.1 group=Whitecap");
-    TwAddVarRW(tw::bar, "FrustumScale", TW_TYPE_FLOAT, &frustumScale, "min=0.0 max=32.0 step=0.001 group=Whitecap");
-//    TwAddVarRW(tw::bar, "displacer", TW_TYPE_FLOAT, &displacer, "min=-40.0 max=40.0 step=0.01 group=Whitecap");
-//    TwAddVarRW(tw::bar, "Gen", TW_TYPE_FLOAT, &foamGen, "min=0.0 max=10.0 step=0.1 group=Whitecap");
-//    TwAddVarRW(tw::bar, "Amp", TW_TYPE_FLOAT, &foamAmp, "min=0.001 max=1.0 step=0.001 group=Whitecap");
+	TwAddVarRW(tw::bar, "Octaves", TW_TYPE_FLOAT, &octaves, "min=1.0 max=16.0 step=1.0 group=Clouds");
+	TwAddVarRW(tw::bar, "Lacunarity", TW_TYPE_FLOAT, &lacunarity, "min=0.1 max=3.0 step=0.1 group=Clouds");
+	TwAddVarRW(tw::bar, "Gain", TW_TYPE_FLOAT, &gain, "min=0.01 max=2.0 step=0.01 group=Clouds");
+	TwAddVarRW(tw::bar, "Norm", TW_TYPE_FLOAT, &norm, "min=0.01 max=1.0 step=0.01 group=Clouds");
+	TwAddVarRW(tw::bar, "Clamp1", TW_TYPE_FLOAT, &clamp1, "min=-1.0 max=1.0 step=0.01 group=Clouds");
+	TwAddVarRW(tw::bar, "Clamp2", TW_TYPE_FLOAT, &clamp2, "min=-1.0 max=1.0 step=0.01 group=Clouds");
+	TwAddVarCB(tw::bar, "Enable1", TW_TYPE_BOOL8, setBool, getBool, &cloudLayer, "label=Enable group=Clouds");
+	TwAddVarRW(tw::bar, "Color", TW_TYPE_COLOR4F, &cloudColor, "group=Clouds");
 
-    TwAddVarRW(tw::bar, "Octaves", TW_TYPE_FLOAT, &octaves, "min=1.0 max=16.0 step=1.0 group=Clouds");
-    TwAddVarRW(tw::bar, "Lacunarity", TW_TYPE_FLOAT, &lacunarity, "min=0.1 max=3.0 step=0.1 group=Clouds");
-    TwAddVarRW(tw::bar, "Gain", TW_TYPE_FLOAT, &gain, "min=0.01 max=2.0 step=0.01 group=Clouds");
-    TwAddVarRW(tw::bar, "Norm", TW_TYPE_FLOAT, &norm, "min=0.01 max=1.0 step=0.01 group=Clouds");
-    TwAddVarRW(tw::bar, "Clamp1", TW_TYPE_FLOAT, &clamp1, "min=-1.0 max=1.0 step=0.01 group=Clouds");
-    TwAddVarRW(tw::bar, "Clamp2", TW_TYPE_FLOAT, &clamp2, "min=-1.0 max=1.0 step=0.01 group=Clouds");
-    TwAddVarCB(tw::bar, "Enable1", TW_TYPE_BOOL8, setBool, getBool, &cloudLayer, "label=Enable group=Clouds");
-    TwAddVarRW(tw::bar, "Color", TW_TYPE_COLOR4F, &cloudColor, "group=Clouds");
-
-    for(GLuint i = 0; i < gl::program::MAX; ++i)
-        gl::programs[i] = NULL;
+	for(GLuint i = 0; i < gl::program::MAX; ++i)
+		gl::programs[i] = NULL;
 
 
     // Gen GL Objects
-    glGenFramebuffersEXT(gl::fbuffer::MAX, gl::fbuffers);
-    glGenTextures(gl::texture::MAX, gl::textures);
-    glGenRenderbuffersEXT(gl::rbuffer::MAX, gl::rbuffers);
-    glGenBuffers(gl::buffer::MAX, gl::buffers);
-	glGenQueries(gl::query::MAX, gl::queries);
+	glGenFramebuffersEXT(gl::fbuffer::MAX, gl::fbuffers);
+	glGenTextures(gl::texture::MAX, gl::textures);
+	glGenRenderbuffersEXT(gl::rbuffer::MAX, gl::rbuffers);
+	glGenBuffers(gl::buffer::MAX, gl::buffers);
 
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, gl::rbuffers[gl::rbuffer::DEPTH_FBO_JACOBIANS]);
 		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, window::width, window::height);
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
 
 // Textures
-    float *data = new float[16*64*3];
-    FILE *f = fopen("data/irradiance.raw", "rb");
-    fread(data, 1, 16*64*3*sizeof(float), f);
-    fclose(f);
-    glActiveTexture(GL_TEXTURE0 + gl::texture::IRRADIANCE);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::IRRADIANCE]);
+	float *data = new float[16*64*3];
+	FILE *f = fopen("data/irradiance.raw", "rb");
+	fread(data, 1, 16*64*3*sizeof(float), f);
+	fclose(f);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::IRRADIANCE);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::IRRADIANCE]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F_ARB, 64, 16, 0, GL_RGB, GL_FLOAT, data);
-    delete[] data;
+	delete[] data;
 
-    int res = 64;
-    int nr = res / 2;
-    int nv = res * 2;
-    int nb = res / 2;
-    int na = 8;
-    f = fopen("data/inscatter.raw", "rb");
-    data = new float[nr*nv*nb*na*4];
-    fread(data, 1, nr*nv*nb*na*4*sizeof(float), f);
-    fclose(f);
-    glActiveTexture(GL_TEXTURE0 + gl::texture::INSCATTER);
-    glBindTexture(GL_TEXTURE_3D, gl::textures[gl::texture::INSCATTER]);
+	int res = 64;
+	int nr = res / 2;
+	int nv = res * 2;
+	int nb = res / 2;
+	int na = 8;
+	f = fopen("data/inscatter.raw", "rb");
+	data = new float[nr*nv*nb*na*4];
+	fread(data, 1, nr*nv*nb*na*4*sizeof(float), f);
+	fclose(f);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::INSCATTER);
+	glBindTexture(GL_TEXTURE_3D, gl::textures[gl::texture::INSCATTER]);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 		glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16F_ARB, na*nb, nv, nr, 0, GL_RGBA, GL_FLOAT, data);
-    delete[] data;
+	delete[] data;
 
-    data = new float[256*64*3];
-    f = fopen("data/transmittance.raw", "rb");
-    fread(data, 1, 256*64*3*sizeof(float), f);
-    fclose(f);
-    glActiveTexture(GL_TEXTURE0 + gl::texture::TRANSMITTANCE);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::TRANSMITTANCE]);
+	data = new float[256*64*3];
+	f = fopen("data/transmittance.raw", "rb");
+	fread(data, 1, 256*64*3*sizeof(float), f);
+	fclose(f);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::TRANSMITTANCE);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::TRANSMITTANCE]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F_ARB, 256, 64, 0, GL_RGB, GL_FLOAT, data);
-    delete[] data;
+	delete[] data;
 
-    float maxAnisotropy = 1.0f;
-    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
+	float maxAnisotropy = 1.0f;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::SKY);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::SKY]);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::SKY);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::SKY]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, skyTexSize, skyTexSize, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-    unsigned char* img = new unsigned char[512 * 512 + 38];
-    f = fopen("data/noise.pgm", "rb");
-    fread(img, 1, 512 * 512 + 38, f);
-    fclose(f);
-    glActiveTexture(GL_TEXTURE0 + gl::texture::NOISE);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::NOISE]);
+	unsigned char* img = new unsigned char[512 * 512 + 38];
+	f = fopen("data/noise.pgm", "rb");
+	fread(img, 1, 512 * 512 + 38, f);
+	fclose(f);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::NOISE);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::NOISE]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 512, 512, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, img + 38);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
     delete[] img;
@@ -1978,8 +1873,8 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 10, 0, GL_RGBA, GL_FLOAT, NULL); // 8 = 1 for y + 2 for slope + 2 for D + 3 for Jacobians (Jxx, Jyy, Jxy)
+//		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA32F_ARB, FFT_SIZE, FFT_SIZE, 10, 0, GL_RGBA, GL_FLOAT, NULL); // 8 = 1 for y + 2 for slope + 2 for D + 3 for Jacobians (Jxx, Jyy, Jxy)
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
 	glActiveTexture(GL_TEXTURE0 + gl::texture::FFT_PONG);
@@ -1988,8 +1883,8 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 10, 0, GL_RGBA, GL_FLOAT, NULL);
+//		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA32F_ARB, FFT_SIZE, FFT_SIZE, 10, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
 	glActiveTexture(GL_TEXTURE0 + gl::texture::BUTTERFLY);
@@ -2008,7 +1903,7 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, window::width, window::height, 0, GL_RED, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
@@ -2018,7 +1913,7 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+//		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 8, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
@@ -2086,8 +1981,8 @@ int main(int argc, char* argv[])
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::SKY], 0);
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::TILE]);
-		glDrawBuffers(1, drawBuffers);
+//	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::TILE]);
+//		glDrawBuffers(1, drawBuffers);
 //		glFramebufferTexture(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, gl::textures[gl::texture::TILE_FOAM], 0);
 
 	// back to default framebuffer
@@ -2096,13 +1991,6 @@ int main(int argc, char* argv[])
 
 	// Grid
 	generateMesh();
-
-	// pos3d+vel3d+age1d+reserved = 8*4 = 32 Bytes
-//    glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, gl::buffers[gl::buffer::TF_PARTICLES_PING]);
-//		glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 32*MAX_PARTICLES, NULL, GL_STREAM_DRAW);
-//    glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, gl::buffers[gl::buffer::TF_PARTICLES_PONG]);
-//		glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 32*MAX_PARTICLES, NULL, GL_STREAM_DRAW);
-//	glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
 
 	// Programs
 	loadPrograms(true);
@@ -2147,8 +2035,6 @@ int main(int argc, char* argv[])
 		onClean();
 		return -1;
 	}
-
-//MACCRO_TEST(string("okok") + string("ijisjds"));
 
 	atexit(onClean);
 	atexit(perf);

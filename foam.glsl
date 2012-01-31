@@ -98,7 +98,7 @@ void main() {
 	float foam  = breakingValue(jacobian_scale, jm.x, jSigma2);
 
 	gl_FragData[0].r = foam;
-
+#if 0
 	// use erf as main function
 	float jxx0 = texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_XX),0.0).r*choppy_factor.x
 	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_XX),0.0).g*choppy_factor.y
@@ -144,7 +144,7 @@ void main() {
 
 	if(isnan(gl_FragData[0].r))
 		gl_FragData[0].r = 1.0;
-
+#endif
 }
 
 #endif

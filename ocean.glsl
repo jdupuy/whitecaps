@@ -46,21 +46,18 @@
 uniform mat4 screenToCamera; // screen space to camera space
 uniform mat4 cameraToWorld; // camera space to world space
 uniform mat4 worldToScreen; // world space to screen space
-uniform mat4 worldToScreen2; // world space to screen space (for whitecap coverage)
 uniform mat4 worldDirToScreen; // world space to screen space
-uniform mat4 modelView;		// modelViewMatrix
+uniform mat4 modelView;       // modelViewMatrix
 uniform vec3 worldCamera; // camera position in world space
 uniform vec3 worldSunDir; // sun direction in world space
 
 uniform vec2 gridSize;
 uniform float normals;
-uniform float points;	/// TMP
 uniform float choppy;
 uniform vec4 choppy_factor;
 //uniform float displacer;
 
 uniform sampler2DArray fftWavesSampler;	// ocean surface
-//uniform sampler2DArray gausszSampler;	// gauss sampler
 
 uniform vec4 GRID_SIZES;
 
@@ -74,7 +71,6 @@ uniform vec3 seaColor; // sea bottom color
 
 varying vec2 u; 	// horizontal coordinates in world space used to compute P(u)
 varying vec3 P; 	// wave point P(u) in world space
-//varying vec3 P2; 	// previous wave point P(u) in world space
 
 #ifdef _VERTEX_
 
@@ -249,8 +245,8 @@ vec3 meanSkyRadiance(vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq) {
 		a = C_p * a_p + C_y * a_y + a_w
 		*_p : pigment concentration params
 		*_y : yellow substance params
-	b = s*Q²
-		s = B²*d*sqrt(c)
+	b = s*Q\B2
+		s = B\B2*d*sqrt(c)
 			d : bubble diameter size
 			c : liquid fraction
 			B = 4/sqrt(3D) : D ~ 1
@@ -393,7 +389,7 @@ void main() {
 
 	// compute projected grid vertex
 //	vec4 uclip 	= worldToScreen2 * vec4(u, 0.0, 1.0);
-	vec4 uclip 	= worldToScreen2 * vec4(P, 1.0);
+	vec4 uclip 	= worldToScreen * vec4(P, 1.0);
 //	vec4 uclip 	= worldToScreen2 * vec4(P.xy, 0.0, 1.0);
 	vec3 undc 	= uclip.xyz/uclip.w;
 	vec2 ufg 	= undc.xy * 0.5 + 0.5;

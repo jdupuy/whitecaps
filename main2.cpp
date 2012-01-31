@@ -28,14 +28,7 @@ using namespace std;
 
 #include "BMPLoader.h"
 
-#define MAX_PARTICLES	65000
 #define BUFFER_OFFSET(i) 	((char *)NULL + (i))
-
-#define MACCRO_TEST(x)	print(x)
-void print(const std::string& str)
-{
-	cout << str << endl;
-}
 
 double bencher = 0.0;
 double frames = 0.0;
@@ -1361,7 +1354,7 @@ void redisplayFunc()
 	glViewport(0, 0, window::width, window::height);
 
 	float clear[] = {0.0,0.0,0.0,0.0};
-	glClearBufferfv(GL_COLOR,1,clear);
+	glClearBufferfv(GL_COLOR,0,clear);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(gl::programs[gl::program::FOAM]->program);

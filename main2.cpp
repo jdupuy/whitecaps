@@ -1,7 +1,3 @@
-/// \todo 	Check Generation of renderbuffers and framebuffers :
-///		 	seems that the names get overwritten ?!!
-
-
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -273,21 +269,10 @@ float foamGen = 7.1f;
 float foamAmp = 1.0f;
 bool spume = false;
 float displacer = 0.0f;
-float zmin0	= 4.064f;
-float zmax0	= 4.19f;
-float zmin1	= 0.825f;
-float zmax1	= 0.949f;
-float zmin2	= 0.102f;
-float zmax2	= 0.119f;
-float zmin3	= 0.015f;
-float zmax3	= 0.021f;
 const int TILE_COUNT = 8;	// must be a pot
 
 // Particles
-int particleCount = 0;
-int samplingGridIndexCount = 0;
-
-float frustumScale = 0.2f;//0.2f;
+float frustumScale = 0.0f;//0.2f;
 
 } // namespace
 
@@ -561,17 +546,6 @@ void loadPrograms(bool all)
     glUseProgram(gl::programs[gl::program::FFTY]->program);
     glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "butterflySampler"), gl::texture::BUTTERFLY);
 
-//	files[0] = "foam2.glsl";
-//    if (gl::programs[gl::program::JACOBIANS] != NULL)
-//    {
-//        delete gl::programs[gl::program::JACOBIANS];
-//        gl::programs[gl::program::JACOBIANS] = NULL;
-//    }
-//    gl::programs[gl::program::JACOBIANS] = new Program(1, files);
-//    glUseProgram(gl::programs[gl::program::JACOBIANS]->program);
-
-
-
     files[0] = "gaussz.glsl";
     if (gl::programs[gl::program::GAUSS] != NULL)
     {
@@ -579,89 +553,6 @@ void loadPrograms(bool all)
         gl::programs[gl::program::GAUSS] = NULL;
     }
     gl::programs[gl::program::GAUSS] = new Program(1, files);
-
-//	files[0] = "whitecapCoverage.glsl";
-//    if (gl::programs[gl::program::WHITECAP_COVERAGE] != NULL)
-//    {
-//        delete gl::programs[gl::program::WHITECAP_COVERAGE];
-//        gl::programs[gl::program::WHITECAP_COVERAGE] = NULL;
-//    }
-//    gl::programs[gl::program::WHITECAP_COVERAGE] = new Program(1, files);
-//
-//	files[0] = "foamEvolution.glsl";
-//    if (gl::programs[gl::program::WHITECAP_UPDATE] != NULL)
-//    {
-//        delete gl::programs[gl::program::WHITECAP_UPDATE];
-//        gl::programs[gl::program::WHITECAP_UPDATE] = NULL;
-//    }
-//    gl::programs[gl::program::WHITECAP_UPDATE] = new Program(1, files);
-//
-//	files[0] = "particleGen.glsl";
-//    if (gl::programs[gl::program::PARTICLE_GEN] != NULL)
-//    {
-//        delete gl::programs[gl::program::PARTICLE_GEN];
-//        gl::programs[gl::program::PARTICLE_GEN] = NULL;
-//    }
-//    gl::programs[gl::program::PARTICLE_GEN] = new Program(1, files);
-//
-//    const GLchar* varyings01[] = {"gsout_ParticlePos","gsout_ParticleAge","gsout_ParticleVel","gsout_reserved"};
-//    glTransformFeedbackVaryings(gl::programs[gl::program::PARTICLE_GEN]->program,
-//								4,
-//								varyings01,
-//								GL_INTERLEAVED_ATTRIBS);
-//	glLinkProgram(gl::programs[gl::program::PARTICLE_GEN]->program);
-//    glUseProgram(gl::programs[gl::program::PARTICLE_GEN]->program);
-//	glUniform2f(glGetUniformLocation(gl::programs[gl::program::PARTICLE_GEN]->program, "cst_InvImageSize"),
-//				1.0f/float(window::width),
-//				1.0f/float(window::height));
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::PARTICLE_GEN]->program, "tex_WaveBreak"),
-//						gl::texture::FOAM_DEBUG);
-//
-//
-////	GLchar buffer[256];
-//
-//	files[0] = "particleUpdate.glsl";
-//    if (gl::programs[gl::program::PARTICLE_UPDATE] != NULL)
-//    {
-//        delete gl::programs[gl::program::PARTICLE_UPDATE];
-//        gl::programs[gl::program::PARTICLE_UPDATE] = NULL;
-//    }
-//    gl::programs[gl::program::PARTICLE_UPDATE] = new Program(1, files);
-//
-//    const GLchar* varyings02[] = {"gsout_Data1","gsout_Data2"};
-//    glTransformFeedbackVaryings(gl::programs[gl::program::PARTICLE_UPDATE]->program,
-//								2,
-//								varyings02,
-//								GL_INTERLEAVED_ATTRIBS);
-//
-//	glLinkProgram(gl::programs[gl::program::PARTICLE_UPDATE]->program);
-//    glUseProgram(gl::programs[gl::program::PARTICLE_UPDATE]->program);
-//	glUniform1f(glGetUniformLocation(gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_ParticleMass"), 0.00001f);
-//
-////	int align = 0;
-////	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &align);
-////	std::cout<< align << "\n";
-//
-//
-//	files[0] = "waveParticle.glsl";
-//    if (gl::programs[gl::program::WHITECAP_PARTICLE] != NULL)
-//    {
-//        delete gl::programs[gl::program::WHITECAP_PARTICLE];
-//        gl::programs[gl::program::WHITECAP_PARTICLE] = NULL;
-//    }
-//    gl::programs[gl::program::WHITECAP_PARTICLE] = new Program(1, files);
-//
-//    glUseProgram(gl::programs[gl::program::WHITECAP_PARTICLE]->program);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::WHITECAP_PARTICLE]->program, "tex_SurfaceData"), gl::texture::FOAM_DEBUG);
-//
-//
-//	files[0] = "sphere.glsl";
-//    if (gl::programs[gl::program::TILE] != NULL)
-//    {
-//        delete gl::programs[gl::program::TILE];
-//        gl::programs[gl::program::TILE] = NULL;
-//    }
-//    gl::programs[gl::program::TILE] = new Program(1, files);
 
 	// Back to default pipeline
 	glUseProgram(0);
@@ -753,109 +644,6 @@ void generateMesh()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-void generateSamplingGrid()
-{
-	std::vector<float> vertices;
-	std::vector<unsigned int> indexes;
-
-	// vertices
-	for(int i = 0; i <= window::width; i+=20)
-		for(int j = 0; j <= window::height; j+=20)
-		{
-			vertices.push_back(float(i)/float(window::width));
-			vertices.push_back(float(j)/float(window::height));
-		}
-
-	int width  = window::width / 20 + 1;
-	int height = window::height / 20 + 1;
-	// indexes
-	for(int i = 0; i < width; ++i)
-		for(int j = 0; j < height; ++j)
-		{
-			// add triangle
-			indexes.push_back(i + width*j);
-			indexes.push_back(i+1 + width*(j+1));
-			indexes.push_back(i + width*(j+1));
-		}
-	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_SAMPLING_GRID]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_SAMPLING_GRID]);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,  sizeof(unsigned int)*indexes.size(), &indexes[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	samplingGridIndexCount = indexes.size();
-}
-
-void generateParticles()
-{
-	const int VERTEX_COUNT_SQRT = 128;
-	const float VERTEX_SPACING	= 1.0f/8.0f;
-	std::vector<float> vertices;
-	for(int i = 0; i < 1; ++i)
-		for(int j = 0; j < VERTEX_COUNT_SQRT; ++j)
-		{
-//			float fi = float (i);
-			float fj = float (j);
-			vertices.push_back((fj - VERTEX_COUNT_SQRT*0.5f)*VERTEX_SPACING);	// x
-//			vertices.push_back((fi - VERTEX_COUNT_SQRT*0.5f)*VERTEX_SPACING);	// y
-			vertices.push_back(5.0f);	// y
-		}
-	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_WPARTICLE]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-}
-
-
-void generateTileGrid()
-{
-	/*
-	 * View space quad (ABCD) (i suck at ascii art)
-	 *     D______C
-	 * 	   |      |
-	 *     |      |
-	 *     |______|
-	 *    /A\     B
-	 *  /    \
-	 * +z    +x
-	 *
-	 * we have dot(z,x) = 0.0 (not really clear in the drawing)
-	 * A := cam origin
-	 */
-	// Generate 6 vertices
-	const float vertices[] =
-	{
-		-1.0f, -1.0f,
-		0.0f, 0.0f,
-
-		1.0f, -1.0f,
-		sqrt(2.0)*0.5, -sqrt(2.0)*0.5,
-
-		1.0f, 1.0f,
-		0.0, -sqrt(2.0),
-
-		-1.0f, -1.0f,
-		0.0f, 0.0f,
-
-		1.0f, 1.0f,
-		0.0, -sqrt(2.0),
-
-		-1.0f, 1.0f,
-		-sqrt(2.0)*0.5, -sqrt(2.0)*0.5
-	};
-
-	// store three times
-	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_TILE_GRID]);
-		glBufferData(GL_ARRAY_BUFFER, 3*sizeof(vertices), NULL, GL_STATIC_DRAW);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vertices), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, 2*sizeof(vertices), sizeof(vertices), vertices);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 // ----------------------------------------------------------------------------
@@ -1584,43 +1372,6 @@ void redisplayFunc()
     glActiveTexture(GL_TEXTURE0 + gl::texture::FFT_PING);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
-	/// compute foam lods
-//	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::TILE]);
-//	glViewport(0,0,FFT_SIZE*TILE_COUNT,FFT_SIZE*TILE_COUNT);
-//	// todo draw quads and check the shit out
-//	glUseProgram(gl::programs[gl::program::TILE]->program);
-//	// set camera
-//	mat4f cam2d = mat4f(
-//                     0.0, -1.0, 0.0, -camera::x,
-//                     0.0, 0.0, 1.0, 0.0f,
-//                     -1.0, 0.0, 0.0, -camera::y,
-//                     0.0, 0.0, 0.0, 1.0
-//                 );
-//
-//	cam2d = mat4f::rotatey(camera::phi) * cam2d;
-//
-////	cout << "cam alt : " << cam2d[1][3] << endl;
-//
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::TILE]->program, "glu_CamMatrix"), 1, true, cam2d.inverse().coefficients());
-//    glUniform3f(glGetUniformLocation(gl::programs[gl::program::TILE]->program, "glu_PatchSizes"), GRID4_SIZE*float(TILE_COUNT), GRID3_SIZE*float(TILE_COUNT), GRID2_SIZE*float(TILE_COUNT));
-//    glUniform4f(glGetUniformLocation(gl::programs[gl::program::TILE]->program, "glu_GridSizes"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
-//    glUniform4f(glGetUniformLocation(gl::programs[gl::program::TILE]->program, "glu_ChoppyFactors"), choppy_factor0, choppy_factor1, choppy_factor2, choppy_factor3);
-//    glUniform1f(glGetUniformLocation(gl::programs[gl::program::TILE]->program, "glu_MinJacobian"), jacobian_scale);
-//    glUniform1i(glGetUniformLocation(gl::programs[gl::program::TILE]->program, "gls_OceanFFT"), gl::texture::FFT_PING_0 + 1-fftPass);
-//
-//	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_TILE_GRID]);
-//		glEnableVertexAttribArray(0);
-//			glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-//			glDrawArrays(GL_TRIANGLES, 0, 18);
-//		glDisableVertexAttribArray(0);
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//
-//	glActiveTexture(GL_TEXTURE0 + gl::texture::TILE_FOAM);
-//		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
-//
-//	glViewport(0, 0, window::width, window::height);
-//cout << glu::errorString(glGetError()) << endl;
-
 	/// filtering
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::GAUSS]);
     glViewport(0, 0, FFT_SIZE, FFT_SIZE);
@@ -1628,25 +1379,16 @@ void redisplayFunc()
     glUniform1i(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "fftWavesSampler"), gl::texture::FFT_PING);
     glUniform4f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "choppy"), choppy_factor0*c0, choppy_factor1*c1, choppy_factor2*c2, choppy_factor3*c3);
 
-//    glUniform1i(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "prevfftWavesSampler"), gl::texture::FFT_PING_0 + fftPass);
-//    if(animate)
-//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "delta"), speed*delta);
-//    else
-//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "delta"), 0.0f);
-
-//    glUniform4f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "GRID_SIZES"), 1.0f, float(GRID1_SIZE)/float(GRID2_SIZE), float(GRID1_SIZE)/float(GRID3_SIZE), float(GRID1_SIZE)/float(GRID4_SIZE));
-    drawQuad();
+	drawQuad();
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::GAUSSZ);
-    glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::GAUSSZ);
+	glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
 	float ch = camera::z;
 	static mat4f prevProj = mat4f::ZERO;
 
     mat4f proj = mat4f::perspectiveProjection(camera::fovy, float(window::width) / float(window::height), 0.1 * ch, 300000.0 * ch);
-//    mat4f proj2 = mat4f::perspectiveProjection(camera::fovy, float(window::width) / float(window::height), 1.0, 20.0);
-//	proj2 = proj;
 
     mat4f view = mat4f(
                      0.0, -1.0, 0.0, -camera::x,
@@ -1663,7 +1405,7 @@ void redisplayFunc()
 	mat4f wview;
 	mat4f wproj;
 	scaleFrustum(frustumScale*ch, camera::fovy, float(window::width) / float(window::height), 0.1 * ch, 300000.0 * ch, view, wview, wproj);
-//	scaleFrustum(frustumScale*ch, camera::fovy, float(window::width) / float(window::height), 0.1, 20.0, view, wview, wproj);
+
 	static mat4f prevwview = mat4f::ZERO;
 	static mat4f prevwproj = mat4f::ZERO;
 
@@ -1676,67 +1418,38 @@ void redisplayFunc()
                       0.0, 0.0, 0.0, 1.0
                   );
 
-//	wview = view;
-//	wproj = proj;
-
-
     // compute foam
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
     glViewport(0, 0, window::width, window::height);
 
-    GLenum drawBuffers_foam[2] =
+    GLenum drawBuffers_foam[1] =
 	{
 		GL_COLOR_ATTACHMENT0_EXT + 1 - foamPass,
-		GL_COLOR_ATTACHMENT2_EXT,
 	};
-//cout << "foam pass " << foamPass << endl;
-	glDrawBuffers(2, drawBuffers_foam);
+
+	glDrawBuffers(1, drawBuffers_foam);
 	float clear[] = {0.0,0.0,0.0,0.0};
 	glClearBufferfv(GL_COLOR,1,clear);
-	float clear2[] = {0.0,0.0,0.0,0.0};
-	glClearBufferfv(GL_COLOR,0,clear2);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(gl::programs[gl::program::FOAM]->program);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "tileSampler"), gl::texture::TILE_FOAM);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "fftWavesSampler"), gl::texture::FFT_PING);
 //	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevfftWavesSampler"), gl::texture::FFT_PING_0 + fftPass);
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invProjection"), 1, true, wproj.inverse().coefficients());
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invView"), 1, true, wview.inverse().coefficients());
 //	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "view"), 1, true, cam2d.coefficients());
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "mvp"), 1, true, (wproj * wview).coefficients());
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevMVP"), 1, true, (prevwproj * prevwview).coefficients());
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldPos"), wview.inverse()[0][3], wview.inverse()[1][3], wview.inverse()[2][3]);
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
-	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0*c0,choppy_factor1*c1,choppy_factor2*c2,choppy_factor3*c3);
-//		glUniform2f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gridSize"), gridSize / float(window::width), gridSize / float(window::height));
-//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy"), choppy);
-//	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_c"), c0,c1,c2,c3);
-//	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "wzmin"), zmin0,zmin1,zmin2,zmin3);
-//	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "wzmax"), zmax0,zmax1,zmax2,zmax3);
-	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "jacobian_scale"), jacobian_scale);
-	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "tileCount"), float(TILE_COUNT));
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevFoamSampler"), gl::texture::FOAM_PING + foamPass);
 	glUniform2f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gridSize"), gridSize / float(window::width), gridSize / float(window::height));
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0*c0,choppy_factor1*c1,choppy_factor2*c2,choppy_factor3*c3);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "jacobian_scale"), jacobian_scale);
 
-	if(animate)
-		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "delta"), max(speed*(t0-t1),0.0));
-	else
-		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "delta"), 0.0f);
+//	if(animate)
+//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "delta"), max(speed*(t0-t1),0.0));
+//	else
+//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "delta"), 0.0f);
 
-//		glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevCamWorldPos"), 0.0, 0.0, prevCamera);
-//		glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevCamWorldForwardDir"), prevView[2][0], prevView[2][1], prevView[2][2]);
-//		glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldForwardDir"), view[0][2], view[1][2], view[2][2]);
-//		glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldFwdDir"), view.inverse()[0][2], view.inverse()[1][2], view.inverse()[2][2]);
-//		glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldForwardDir"), 0.0, 1.0, 0.0);
-
-//     glPolygonMode(GL_FRONT, GL_LINE);
-//        glPolygonMode(GL_BACK, GL_LINE);
-
-	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "foamParam"), foamJmin, foamJmax, foamZmin, foamZmax);
-	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "foamParam2"), foamLifetime, foamGen, foamAmp, 0.0);
-//		glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "previousWorldDirToScreen"), 1, true, (proj * prevDview).coefficients());
-//		glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "previousWorldCamera"), 0.0, 0.0, prevCamera);
 
 //		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
@@ -1745,38 +1458,9 @@ void redisplayFunc()
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
 
-
-//	glEnable(GL_BLEND);
-//	glDrawBuffers(1, drawBuffers_foam);
-//	glBlendFunc(GL_ONE, GL_ONE);
-//	glBlendEquation(GL_FUNC_ADD);
-//	glUseProgram(gl::programs[gl::program::WHITECAP_UPDATE]->program);
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "invProjection"), 1, true, wproj.inverse().coefficients());
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "invView"), 1, true, wview.inverse().coefficients());
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "mvp"), 1, true, (wproj * wview).coefficients());
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "prevMVP"), 1, true, (prevwproj * prevwview).coefficients());
-//	glUniform3f(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "camWorldPos"), wview.inverse()[0][3], wview.inverse()[1][3], wview.inverse()[2][3]);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "prevFoamSampler"), gl::texture::FOAM_PING + foamPass);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "whitecapData2"), gl::texture::FOAM_DEBUG);
-//
-//	if(animate)
-//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "delta"), speed*(t0-t1));
-//	else
-//		glUniform1f(glGetUniformLocation(gl::programs[gl::program::WHITECAP_UPDATE]->program, "delta"), 0.0f);
-//
-////    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
-////	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//
-//	glDisableClientState(GL_VERTEX_ARRAY);
-//	glDisable(GL_BLEND);
-
     /// Todo : compute mipmaps manually ?
 	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PING + 1 - foamPass);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
-//	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_DEBUG);
-//		glGenerateMipmapEXT(GL_TEXTURE_2D);
-
 
 	// Compute Jacobian EigenVectors and values
 	if(renderJacobians)
@@ -1788,12 +1472,10 @@ void redisplayFunc()
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(gl::programs[gl::program::JACOBIANS]->program);
-//		glUniform1i(glGetUniformLocation(gl::programs[gl::program::JACOBIANS]->program, "jacobianSampler"), gl::texture::TILE_FOAM);
-//		glUniform1i(glGetUniformLocation(gl::programs[gl::program::JACOBIANS]->program, "jacobianSampler"), gl::texture::FOAM_PING + 1-foamPass);
-		glUniform1i(glGetUniformLocation(gl::programs[gl::program::JACOBIANS]->program, "jacobianSampler"), gl::texture::FOAM_DEBUG);
+		glUniform1i(glGetUniformLocation(gl::programs[gl::program::JACOBIANS]->program, "jacobianSampler"), gl::texture::FOAM_PING + 1-foamPass);
 		drawQuad();
 		TwDraw();
-        glutSwapBuffers();
+		glutSwapBuffers();
 
 		foamPass = 1 - foamPass;
 
@@ -1806,52 +1488,9 @@ void redisplayFunc()
 	}
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-    glDrawBuffer(GL_BACK);
-    glViewport(0, 0, window::width, window::height);
+	glDrawBuffer(GL_BACK);
+	glViewport(0, 0, window::width, window::height);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-//	static int particlePass = 0;
-//	// Generate new particles (if room available)
-//	if(particleCount < MAX_PARTICLES/2 && spume)
-//	{
-//		glEnable(GL_RASTERIZER_DISCARD);
-//		glUseProgram(gl::programs[gl::program::PARTICLE_GEN]->program);
-//		glBindBufferRange(	GL_TRANSFORM_FEEDBACK_BUFFER,
-//							0,
-//							gl::buffers[gl::buffer::TF_PARTICLES_PING+particlePass],
-//							particleCount*32,	// sizeof(ptkl_vertex) = 32
-//							(MAX_PARTICLES-particleCount)*32);
-//
-//		glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_SAMPLING_GRID]);
-//		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_SAMPLING_GRID]);
-//		glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,0);
-//		glEnableVertexAttribArray(0);
-//
-//		glBeginQuery(GL_PRIMITIVES_GENERATED, gl::queries[gl::query::PARTCILE_GEN]);
-//		glBeginTransformFeedback(GL_POINTS);
-//			glDrawElements(GL_TRIANGLES, samplingGridIndexCount, GL_UNSIGNED_INT, 0);
-//		glEndTransformFeedback();
-//		glEndQuery(GL_PRIMITIVES_GENERATED);
-//
-//		glDisableVertexAttribArray(0);
-//
-//		GLint res = 0;
-//		glGetQueryObjectiv(gl::queries[gl::query::PARTCILE_GEN], GL_QUERY_RESULT, &res);
-//		particleCount += res;
-//		if(particleCount > MAX_PARTICLES)
-//			particleCount = MAX_PARTICLES;
-//
-//		glBindBuffer(GL_ARRAY_BUFFER, 0);
-//		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-//		glDisable(GL_RASTERIZER_DISCARD);
-//
-//	}
-//	else if(spume)
-//	{
-////		std::cout << "buffer full\n";
-//	}
-
-///------
 
     if (show_spectrum)
     {
@@ -1873,150 +1512,68 @@ void redisplayFunc()
 
 /// Final Rendering
 	glEnable(GL_DEPTH_TEST);
-    glUseProgram(gl::programs[gl::program::RENDER]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "fftWavesSampler"), gl::texture::FFT_PING);
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "screenToCamera"), 1, true, proj.inverse().coefficients());
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "cameraToWorld"), 1, true, view.inverse().coefficients());
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldToScreen"), 1, true, (proj * view).coefficients());
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldToScreen2"), 1, true, (wproj * wview).coefficients());
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldDirToScreen"), 1, true, (proj * dview).coefficients());
-    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "modelView"), 1, true, view.coefficients());
-    glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldCamera"),  view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
-    glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldSunDir"), sun.x, sun.y, sun.z);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "hdrExposure"), hdrExposure);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "displacer"), displacer);
+	glUseProgram(gl::programs[gl::program::RENDER]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "fftWavesSampler"), gl::texture::FFT_PING);
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "screenToCamera"), 1, true, proj.inverse().coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "cameraToWorld"), 1, true, view.inverse().coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldToScreen"), 1, true, (proj * view).coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldToScreen2"), 1, true, (wproj * wview).coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldDirToScreen"), 1, true, (proj * dview).coefficients());
+	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "modelView"), 1, true, view.coefficients());
+	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldCamera"),  view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
+	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldSunDir"), sun.x, sun.y, sun.z);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "hdrExposure"), hdrExposure);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "displacer"), displacer);
 
-    glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "seaColor"), seaColor[0] * seaColor[3], seaColor[1] * seaColor[3], seaColor[2] * seaColor[3]);
+	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "seaColor"), seaColor[0] * seaColor[3], seaColor[1] * seaColor[3], seaColor[2] * seaColor[3]);
 
-    glUniform4f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
 
-    glUniform2f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "gridSize"), gridSize/float(window::width), gridSize/float(window::height));
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum"), show_spectrum);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "normals"), normals);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy"), choppy);
-    glUniform4f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy_factor"),choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
+	glUniform2f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "gridSize"), gridSize/float(window::width), gridSize/float(window::height));
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum"), show_spectrum);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "normals"), normals);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy"), choppy);
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy_factor"),choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
 //    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "jacobian_scale"), jacobian_scale);
 
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamSampler"), gl::texture::FOAM_PING + 1-foamPass);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamSampler"), gl::texture::FOAM_PING + 1-foamPass);
 
-    if (grid)
-    {
-        glPolygonMode(GL_FRONT, GL_LINE);
-        glPolygonMode(GL_BACK, GL_LINE);
-    }
-    else
-    {
-        glPolygonMode(GL_FRONT, GL_FILL);
-        glPolygonMode(GL_BACK, GL_FILL);
-    }
+	if (grid)
+	{
+		glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_BACK, GL_LINE);
+	}
+	else
+	{
+		glPolygonMode(GL_FRONT, GL_FILL);
+		glPolygonMode(GL_BACK, GL_FILL);
+	}
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-    glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_GRID]);
-    glVertexPointer(4, GL_FLOAT, 16, 0);
-    glEnableClientState(GL_VERTEX_ARRAY);
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
-//    glDisable(GL_DEPTH_TEST);
-//    glPointSize(3.0f);
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-//    glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_GRID]);
+	glVertexPointer(4, GL_FLOAT, 16, 0);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
+	//    glDisable(GL_DEPTH_TEST);
+	//    glPointSize(3.0f);
+	//    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+	//    glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
 
-    glPolygonMode(GL_FRONT, GL_FILL);
-    glPolygonMode(GL_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glPolygonMode(GL_BACK, GL_FILL);
 	glDisable(GL_CULL_FACE);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 
-    if (cloudLayer && ch > 3000.0)
-    {
-        drawClouds(sun, proj * view);
-    }
+	if (cloudLayer && ch > 3000.0)
+	{
+		drawClouds(sun, proj * view);
+	}
 
-
-
-	// Part two : update particles
-//	if(particleCount > 0 && spume)
-//	{
-////		glDisable(GL_DEPTH_TEST);
-//		glEnable(GL_BLEND);
-//		glEnable(GL_PROGRAM_POINT_SIZE);
-//		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//		glBlendEquation(GL_FUNC_ADD);
-//		// Rasterize and update particles
-//		glUseProgram(gl::programs[gl::program::PARTICLE_UPDATE]->program);
-//		glUniform1i(glGetUniformLocation(	gl::programs[gl::program::PARTICLE_UPDATE]->program, "tex_OceanSurfaceData"),
-////											gl::texture::FFT_PING_0 + 1 - fftPass);
-//											gl::texture::FOAM_DEBUG);
-//		glUniform1f(glGetUniformLocation(	gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_ParticleLifetime"),
-//											foamLifetime);
-//		glUniform4f(glGetUniformLocation(	gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_Choppy"),
-//											choppy_factor0,
-//											choppy_factor1,
-//											choppy_factor2,
-//											choppy_factor3);
-//		glUniform4f(glGetUniformLocation(	gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_GridSizes"),
-//											GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE 	);
-//
-//		if(animate)
-//		glUniform1f(glGetUniformLocation(	gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_Delta"),
-//											speed*(t0-t1));
-//		else
-//		glUniform1f(glGetUniformLocation(	gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_Delta"),
-//											0.0f);
-//		glUniformMatrix4fv(	glGetUniformLocation(gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_MVP"),
-//							1,
-//							true,
-//							(proj * view).coefficients()	);
-//		glUniformMatrix4fv(	glGetUniformLocation(gl::programs[gl::program::PARTICLE_UPDATE]->program, "cst_MVP2"),
-//							1,
-//							true,
-//							(wproj * wview).coefficients()	);
-//
-//
-//		glBindBufferBase(	GL_TRANSFORM_FEEDBACK_BUFFER,
-//							0,
-//							gl::buffers[gl::buffer::TF_PARTICLES_PING+1-particlePass]	);
-//
-//
-//		glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::TF_PARTICLES_PING+particlePass]);
-//		glVertexAttribPointer(0,4,GL_FLOAT,GL_FALSE,32,0);
-//		glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,32,BUFFER_OFFSET(16));
-//		glEnableVertexAttribArray(0);
-//		glEnableVertexAttribArray(1);
-//
-//		glBeginQuery(GL_PRIMITIVES_GENERATED, gl::queries[gl::query::PARTCILE_GEN]);
-//		glBeginTransformFeedback(GL_POINTS);
-//			glDrawArrays(GL_POINTS, 0, particleCount);
-//		glEndTransformFeedback();
-//		glEndQuery(GL_PRIMITIVES_GENERATED);
-//
-//		glDisableVertexAttribArray(0);
-//		glDisableVertexAttribArray(1);
-//
-//
-//		// update number of particles
-//		glGetQueryObjectiv(gl::queries[gl::query::PARTCILE_GEN], GL_QUERY_RESULT, &particleCount);
-//
-////		std::cout << "particles	: " << particleCount << "\n";
-////		std::cout << "error 	: " << glGetError() << " " << __LINE__  << "\n\n";
-////		std::cout << "\n";
-//
-//		glBindBuffer(GL_ARRAY_BUFFER, 0);
-//		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-//
-//		// switch buffers
-//		particlePass = 1 - particlePass;
-//
-//		glDisable(GL_BLEND);
-//		glDisable(GL_PROGRAM_POINT_SIZE);
-//	}
-//	else if(spume)
-//	{
-//		std::cout << "no particles\n";
-//	}
 
 	/// render atmosphere (after scene -> use early Z !!)
     glUseProgram(gl::programs[gl::program::SKY]->program);
@@ -2035,41 +1592,14 @@ void redisplayFunc()
     if (cloudLayer && camera::z < 3000.0)
         drawClouds(sun, proj * view);
 
-	// render particles
-//	glViewport(window::width/2, 0, window::width/2, window::height/4);
-//	glUseProgram(gl::programs[gl::program::WHITECAP_PARTICLE]->program);
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::WHITECAP_PARTICLE]->program, "cst_MVP"), 1, true, (proj * view).coefficients());
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::WHITECAP_PARTICLE]->program, "cst_MVPs"), 1, true, (wproj * wview).coefficients());
-//	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_WPARTICLE]);
-//	glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,0);
-//	glEnableVertexAttribArray(0);
-////	glDrawArrays(GL_POINTS, 0, 256*256);
-//	glUniform1f(glGetUniformLocation(gl::programs[gl::program::WHITECAP_PARTICLE]->program, "cst_Pass"), 0.0f);
-//	glDrawArrays(GL_POINTS, 0, 128);
-//	glUniform1f(glGetUniformLocation(gl::programs[gl::program::WHITECAP_PARTICLE]->program, "cst_Pass"), 1.0f);
-//	glDrawArrays(GL_POINTS, 0, 128);
-//
-//	glDisableVertexAttribArray(0);
-
-//    glUseProgram(gl::programs[gl::program::TILE]->program);
-//    glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::TILE]->program, "glu_Mvp"),
-//                       1,
-//                       true,
-//                       (proj * view).coefficients() );
-////    glDisable(GL_CULL_FACE);
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//    glEnable(GL_CULL_FACE);
-//    drawTessCube(foamZmin);
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-////    glEnable(GL_CULL_FACE);
 
 	glUseProgram(0);
 //	if(animate)
 	foamPass = 1 - foamPass;
 
-    prevView = view;
-    prevProj = proj;
-    prevwview = wview;
+	prevView = view;
+	prevProj = proj;
+	prevwview = wview;
 	prevwproj = wproj;
 
     TwDraw();
@@ -2080,7 +1610,7 @@ void redisplayFunc()
 
 void perf()
 {
-    cout << "avg time : " << bencher*1000.0 / frames << endl;
+    cout << "avg time : " << bencher*1000.0 / frames << " ms" << endl;
 }
 
 void reshapeFunc(int x, int y)
@@ -2454,10 +1984,10 @@ int main(int argc, char* argv[])
     f = fopen("data/noise/noise_iA_C256.pgm", "rb");
 //    f = fopen("data/noise/noise_iA_C256_2.pgm", "rb");
 //    f = fopen("data/noise/noise_A_C256.pgm", "rb");
-    fread(img, 1, 256 * 256 + 38, f);
-    fclose(f);
-    glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_SURFACE);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_SURFACE]);
+	fread(img, 1, 256 * 256 + 38, f);
+	fclose(f);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_SURFACE);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_SURFACE]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -2466,52 +1996,10 @@ int main(int argc, char* argv[])
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, img + 38);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-	// compute "mipmaps"
-//	GLuint w = 256;
-//	GLint level = 1;
-//	GLuint c0, c1, c2, c3;
-//	GLubyte* prevData 		= new GLubyte[w*w];
-//	GLubyte* imgdata 		= new GLubyte[w*w/4];
-//	while(w > 1)
-//	{
-//
-//		// Get previous pixels
-//		glGetTexImage(GL_TEXTURE_2D, level-1, GL_RED, GL_UNSIGNED_BYTE, prevData);
-//		// get max values
-//		c0 = 0u;
-//		c1 = 0u;
-//		c2 = 0u;
-//		c3 = 0u;
-//		for(GLuint x = 0; x < w; x+=2)
-//			for(GLuint y = 0; y < w; y+=2)
-//			{
-//				c0 = prevData[x*w + y];
-//				c1 = prevData[x*w + y+1];
-//				c2 = prevData[(x+1)*w + y];
-//				c3 = prevData[(x+1)*w + y+1];
-////				c3 = prevData[(y+1)*w + x+1];
-//				imgdata[x*w/4 + y/2] = GLubyte(max(max(c0,c1), max(c2,c3)));
-////				imgdata[y*w/4 + x/2] = 255;
-////				if(level > 6)
-////				{
-////					std::cout << "level : " << level << " size : " << w/2 << " ";
-//////					std::cout << c0 << " " << c1 << " " << c2 << " " << c3;
-////					std::cout << " took " << (GLuint)imgdata[x*w/4 + y/2];
-////					std::cout << std::endl;
-////				}
-//			}
-//		glTexImage2D(GL_TEXTURE_2D, level, GL_RED, w/2, w/2, 0, GL_RED, GL_UNSIGNED_BYTE, imgdata);
-//
-////		std::cout << "l : " << level <<" size " << w/2 << " "<< glu::errorString(glGetError()) << std::endl;
-//		++level;
-//		w /= 2;
-//	}
-//	delete[] imgdata;
-//	delete[] prevData;
-    delete[] img;
-//std::cout << glGetError() << "\n";
+	delete[] img;
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::SPECTRUM12);
+
+	glActiveTexture(GL_TEXTURE0 + gl::texture::SPECTRUM12);
 	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::SPECTRUM12]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -2519,7 +2007,7 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 0, GL_RGB, GL_FLOAT, NULL);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::SPECTRUM34);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::SPECTRUM34);
 	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::SPECTRUM34]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -2527,7 +2015,7 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 0, GL_RGB, GL_FLOAT, NULL);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::SLOPE_VARIANCE);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::SLOPE_VARIANCE);
 	glBindTexture(GL_TEXTURE_3D, gl::textures[gl::texture::SLOPE_VARIANCE]);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -2536,7 +2024,7 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 		glTexImage3D(GL_TEXTURE_3D, 0, GL_LUMINANCE_ALPHA16F_ARB, N_SLOPE_VARIANCE, N_SLOPE_VARIANCE, N_SLOPE_VARIANCE, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::FFT_PING);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::FFT_PING);
 	glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, gl::textures[gl::texture::FFT_PING]);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -2546,7 +2034,7 @@ int main(int argc, char* argv[])
 		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 10, 0, GL_RGBA, GL_FLOAT, NULL); // 8 = 1 for y + 2 for slope + 2 for D + 3 for Jacobians (Jxx, Jyy, Jxy)
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::FFT_PONG);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::FFT_PONG);
 	glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, gl::textures[gl::texture::FFT_PONG]);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -2556,18 +2044,18 @@ int main(int argc, char* argv[])
 		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 10, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::BUTTERFLY);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::BUTTERFLY]);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::BUTTERFLY);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::BUTTERFLY]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		data = computeButterflyLookupTexture();
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, FFT_SIZE, PASSES, 0, GL_RGBA, GL_FLOAT, data);
-    delete[] data;
+	delete[] data;
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PING);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PING]);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PING);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PING]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -2576,8 +2064,8 @@ int main(int argc, char* argv[])
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, window::width, window::height, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PONG);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PONG]);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PONG);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PONG]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -2587,7 +2075,7 @@ int main(int argc, char* argv[])
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
 	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_DEBUG);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_DEBUG]);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_DEBUG]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -2596,8 +2084,8 @@ int main(int argc, char* argv[])
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, window::width, window::height, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-    glActiveTexture(GL_TEXTURE0 + gl::texture::GAUSSZ);
-    glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, gl::textures[gl::texture::GAUSSZ]);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::GAUSSZ);
+	glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, gl::textures[gl::texture::GAUSSZ]);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -2611,7 +2099,7 @@ int main(int argc, char* argv[])
 		std::cout << "normal map loading failed\n";
 
 	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_NORMALMAP);
-    glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_NORMALMAP]);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_NORMALMAP]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -2619,7 +2107,7 @@ int main(int argc, char* argv[])
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.bytes);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-    generateWavesSpectrum();
+	generateWavesSpectrum();
 
 	glActiveTexture(GL_TEXTURE0 + gl::texture::TILE_FOAM);
     glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, gl::textures[gl::texture::TILE_FOAM]);
@@ -2633,7 +2121,7 @@ int main(int argc, char* argv[])
 
 
 // FrameBuffers
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::VARIANCES]);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::VARIANCES]);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
@@ -2653,7 +2141,7 @@ int main(int argc, char* argv[])
 
 
 	// Layered FBO (using geometry shader, set layers to render to)
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
 		glFramebufferTextureEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, gl::textures[gl::texture::FFT_PING], 0);
 		glFramebufferTextureEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, gl::textures[gl::texture::FFT_PONG], 0);
 
@@ -2684,7 +2172,7 @@ int main(int argc, char* argv[])
 		glFramebufferTextureLayerEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT6_EXT, gl::textures[gl::texture::GAUSSZ], 0, 6);
 		glFramebufferTextureLayerEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT7_EXT, gl::textures[gl::texture::GAUSSZ], 0, 7);
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::SKY]);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::SKY]);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::SKY], 0);
 
@@ -2692,28 +2180,25 @@ int main(int argc, char* argv[])
 		glDrawBuffers(1, drawBuffers);
 //		glFramebufferTexture(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, gl::textures[gl::texture::TILE_FOAM], 0);
 
-    // back to default framebuffer
+	// back to default framebuffer
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 		glDrawBuffer(GL_BACK);
 
 	// Grid
-    generateMesh();
-    generateSamplingGrid();
-	generateParticles();
-	generateTileGrid();
+	generateMesh();
 
 	// pos3d+vel3d+age1d+reserved = 8*4 = 32 Bytes
-    glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, gl::buffers[gl::buffer::TF_PARTICLES_PING]);
-		glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 32*MAX_PARTICLES, NULL, GL_STREAM_DRAW);
-    glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, gl::buffers[gl::buffer::TF_PARTICLES_PONG]);
-		glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 32*MAX_PARTICLES, NULL, GL_STREAM_DRAW);
-	glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
+//    glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, gl::buffers[gl::buffer::TF_PARTICLES_PING]);
+//		glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 32*MAX_PARTICLES, NULL, GL_STREAM_DRAW);
+//    glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, gl::buffers[gl::buffer::TF_PARTICLES_PONG]);
+//		glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 32*MAX_PARTICLES, NULL, GL_STREAM_DRAW);
+//	glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
 
 	// Programs
-    loadPrograms(true);
+	loadPrograms(true);
 
 	// Slope
-    computeSlopeVarianceTex(NULL);
+	computeSlopeVarianceTex(NULL);
 
 //	GLint maxColorAttach = 0;
 //	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAttach);
@@ -2758,10 +2243,10 @@ int main(int argc, char* argv[])
 	atexit(onClean);
 	atexit(perf);
 
-    glutMainLoop();
+	glutMainLoop();
 
 
 
-    return 0;
+	return 0;
 }
 

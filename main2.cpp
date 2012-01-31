@@ -95,12 +95,9 @@ enum
     FFT_PONG,
     BUTTERFLY,
     FOAM_SURFACE,
-    FOAM_PING,
-    FOAM_PONG,
+    FOAM,
     GAUSSZ,
-    FOAM_DEBUG,
     FOAM_NORMALMAP,
-    TILE_FOAM,
 
     MAX
 };
@@ -112,14 +109,10 @@ enum
 {
     INDEX_GRID = 0,
     VERTEX_GRID,
-    TF_PARTICLES_PING,
-    TF_PARTICLES_PONG,
-    VERTEX_SAMPLING_GRID,
-    INDEX_SAMPLING_GRID,
-    TF_FLOW_PING,
-    TF_FLOW_PONG,
-    VERTEX_WPARTICLE,	// points for the surface
-    VERTEX_TILE_GRID,
+//    TF_PARTICLES_PING,
+//    TF_PARTICLES_PONG,
+//    VERTEX_SAMPLING_GRID,
+//    INDEX_SAMPLING_GRID,
 
     MAX
 };
@@ -152,12 +145,12 @@ enum
     JACOBIANS,
     FOAM,
     GAUSS,
-    PARTICLE_GEN,
-    PARTICLE_UPDATE,
-    WHITECAP_COVERAGE,
-    WHITECAP_PARTICLE,
-    WHITECAP_UPDATE,
-    TILE,
+//    PARTICLE_GEN,
+//    PARTICLE_UPDATE,
+//    WHITECAP_COVERAGE,
+//    WHITECAP_PARTICLE,
+//    WHITECAP_UPDATE,
+//    TILE,
 
     MAX
 };
@@ -396,163 +389,164 @@ void drawClouds(const vec4f &sun, const mat4f &mat)
 
 void loadPrograms(bool all)
 {
-    char* files[2];
-    char options[512];
-    files[0] = "atmosphere.glsl";
-    files[1] = "ocean.glsl";
-    sprintf(options, "#define %sSEA_CONTRIB\n#define %sSUN_CONTRIB\n#define %sSKY_CONTRIB\n#define %sCLOUDS\n#define %sHARDWARE_ANISTROPIC_FILTERING\n#define %sFOAM_CONTRIB\n",
-            seaContrib ? "" : "NO_", sunContrib ? "" : "NO_", skyContrib ? "" : "NO_", cloudLayer ? "" : "NO_", manualFilter ? "NO_" : "", foamContrib ? "" : "NO_");
+	char* files[2];
+	char options[512];
+	files[0] = "atmosphere.glsl";
+	files[1] = "ocean.glsl";
+	sprintf(options, "#define %sSEA_CONTRIB\n#define %sSUN_CONTRIB\n#define %sSKY_CONTRIB\n#define %sCLOUDS\n#define %sHARDWARE_ANISTROPIC_FILTERING\n#define %sFOAM_CONTRIB\n",
+		    seaContrib ? "" : "NO_", sunContrib ? "" : "NO_", skyContrib ? "" : "NO_", cloudLayer ? "" : "NO_", manualFilter ? "NO_" : "", foamContrib ? "" : "NO_");
 
-    if (gl::programs[gl::program::RENDER] != NULL)
-    {
-        delete gl::programs[gl::program::RENDER];
-        gl::programs[gl::program::RENDER] = NULL;
-    }
-    gl::programs[gl::program::RENDER] = new Program(2, files, options);
-    glUseProgram(gl::programs[gl::program::RENDER]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "skyIrradianceSampler"), gl::texture::IRRADIANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "inscatterSampler"), gl::texture::INSCATTER);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "skySampler"), gl::texture::SKY);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "slopeVarianceSampler"), gl::texture::SLOPE_VARIANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "noiseSampler2"), gl::texture::FOAM_SURFACE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamNormalSampler"), gl::texture::FOAM_NORMALMAP);
+	if (gl::programs[gl::program::RENDER] != NULL)
+	{
+		delete gl::programs[gl::program::RENDER];
+		gl::programs[gl::program::RENDER] = NULL;
+	}
+	gl::programs[gl::program::RENDER] = new Program(2, files, options);
+	glUseProgram(gl::programs[gl::program::RENDER]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "skyIrradianceSampler"), gl::texture::IRRADIANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "inscatterSampler"), gl::texture::INSCATTER);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "skySampler"), gl::texture::SKY);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "slopeVarianceSampler"), gl::texture::SLOPE_VARIANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "noiseSampler2"), gl::texture::FOAM_SURFACE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamNormalSampler"), gl::texture::FOAM_NORMALMAP);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamSampler"), gl::texture::FOAM);
 
-    files[0] = "foam.glsl";
-    if (gl::programs[gl::program::FOAM] != NULL)
-    {
-        delete gl::programs[gl::program::FOAM];
-        gl::programs[gl::program::FOAM] = NULL;
-    }
-    gl::programs[gl::program::FOAM] = new Program(1, files);
-    glUseProgram(gl::programs[gl::program::FOAM]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gausszSampler"), gl::texture::GAUSSZ);
+	files[0] = "foam.glsl";
+	if (gl::programs[gl::program::FOAM] != NULL)
+	{
+		delete gl::programs[gl::program::FOAM];
+		gl::programs[gl::program::FOAM] = NULL;
+	}
+	gl::programs[gl::program::FOAM] = new Program(1, files);
+	glUseProgram(gl::programs[gl::program::FOAM]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gausszSampler"), gl::texture::GAUSSZ);
 
-    if (!all)
-    {
-        return;
-    }
+	if (!all)
+	{
+		return;
+	}
 
-    files[0] = "atmosphere.glsl";
-    files[1] = "sky.glsl";
-    if (gl::programs[gl::program::SKY] != NULL)
-    {
-        delete gl::programs[gl::program::SKY];
-        gl::programs[gl::program::SKY] = NULL;
-    }
-    gl::programs[gl::program::SKY] = new Program(2, files, options);
-    glUseProgram(gl::programs[gl::program::SKY]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "gl::programs[gl::program::SKY]IrradianceSampler"), gl::texture::IRRADIANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "inscatterSampler"), gl::texture::INSCATTER);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "skySampler"), gl::texture::SKY);
+	files[0] = "atmosphere.glsl";
+	files[1] = "sky.glsl";
+	if (gl::programs[gl::program::SKY] != NULL)
+	{
+		delete gl::programs[gl::program::SKY];
+		gl::programs[gl::program::SKY] = NULL;
+	}
+	gl::programs[gl::program::SKY] = new Program(2, files, options);
+	glUseProgram(gl::programs[gl::program::SKY]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "gl::programs[gl::program::SKY]IrradianceSampler"), gl::texture::IRRADIANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "inscatterSampler"), gl::texture::INSCATTER);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKY]->program, "skySampler"), gl::texture::SKY);
 
-    files[0] = "atmosphere.glsl";
-    files[1] = "skymap.glsl";
-    if (gl::programs[gl::program::SKYMAP] != NULL)
-    {
-        delete gl::programs[gl::program::SKYMAP];
-        gl::programs[gl::program::SKYMAP] = NULL;
-    }
-    gl::programs[gl::program::SKYMAP] = new Program(2, files, options);
-    glUseProgram(gl::programs[gl::program::SKYMAP]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "skyIrradianceSampler"), gl::texture::IRRADIANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "inscatterSampler"), gl::texture::INSCATTER);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "noiseSampler"), gl::texture::NOISE);
+	files[0] = "atmosphere.glsl";
+	files[1] = "skymap.glsl";
+	if (gl::programs[gl::program::SKYMAP] != NULL)
+	{
+		delete gl::programs[gl::program::SKYMAP];
+		gl::programs[gl::program::SKYMAP] = NULL;
+	}
+	gl::programs[gl::program::SKYMAP] = new Program(2, files, options);
+	glUseProgram(gl::programs[gl::program::SKYMAP]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "skyIrradianceSampler"), gl::texture::IRRADIANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "inscatterSampler"), gl::texture::INSCATTER);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SKYMAP]->program, "noiseSampler"), gl::texture::NOISE);
 
-    if (gl::programs[gl::program::CLOUDS] == NULL)
-    {
-        files[0] = "atmosphere.glsl";
-        files[1] = "clouds.glsl";
-        gl::programs[gl::program::CLOUDS] = new Program(2, files);
-        glUseProgram(gl::programs[gl::program::CLOUDS]->program);
-        glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "skyIrradianceSampler"), gl::texture::IRRADIANCE);
-        glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "inscatterSampler"), gl::texture::INSCATTER);
-        glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
-        glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "noiseSampler"), gl::texture::NOISE);
-    }
+	if (gl::programs[gl::program::CLOUDS] == NULL)
+	{
+		files[0] = "atmosphere.glsl";
+		files[1] = "clouds.glsl";
+		gl::programs[gl::program::CLOUDS] = new Program(2, files);
+		glUseProgram(gl::programs[gl::program::CLOUDS]->program);
+		glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "skyIrradianceSampler"), gl::texture::IRRADIANCE);
+		glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "inscatterSampler"), gl::texture::INSCATTER);
+		glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "transmittanceSampler"), gl::texture::TRANSMITTANCE);
+		glUniform1i(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "noiseSampler"), gl::texture::NOISE);
+	}
 
-    files[0] = "spectrum.glsl";
-    if (gl::programs[gl::program::SHOW_SPECTRUM] != NULL)
-    {
-        delete gl::programs[gl::program::SHOW_SPECTRUM];
-        gl::programs[gl::program::SHOW_SPECTRUM] = NULL;
-    }
-    gl::programs[gl::program::SHOW_SPECTRUM] = new Program(1, files);
-    glUseProgram(gl::programs[gl::program::SHOW_SPECTRUM]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
+	files[0] = "spectrum.glsl";
+	if (gl::programs[gl::program::SHOW_SPECTRUM] != NULL)
+	{
+		delete gl::programs[gl::program::SHOW_SPECTRUM];
+		gl::programs[gl::program::SHOW_SPECTRUM] = NULL;
+	}
+	gl::programs[gl::program::SHOW_SPECTRUM] = new Program(1, files);
+	glUseProgram(gl::programs[gl::program::SHOW_SPECTRUM]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::SHOW_SPECTRUM]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
 
-    files[0] = "init.glsl";
-    if (gl::programs[gl::program::INIT] != NULL)
-    {
-        delete gl::programs[gl::program::INIT];
-        gl::programs[gl::program::INIT] = NULL;
-    }
-    gl::programs[gl::program::INIT] = new Program(1, files);
-    glUseProgram(gl::programs[gl::program::INIT]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
+	files[0] = "init.glsl";
+	if (gl::programs[gl::program::INIT] != NULL)
+	{
+		delete gl::programs[gl::program::INIT];
+		gl::programs[gl::program::INIT] = NULL;
+	}
+	gl::programs[gl::program::INIT] = new Program(1, files);
+	glUseProgram(gl::programs[gl::program::INIT]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
 
-    files[0] = "init2.glsl";
-    if (gl::programs[gl::program::INIT2] != NULL)
-    {
-        delete gl::programs[gl::program::INIT2];
-        gl::programs[gl::program::INIT2] = NULL;
-    }
-    gl::programs[gl::program::INIT2] = new Program(1, files);
-    glUseProgram(gl::programs[gl::program::INIT2]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
+	files[0] = "init2.glsl";
+	if (gl::programs[gl::program::INIT2] != NULL)
+	{
+		delete gl::programs[gl::program::INIT2];
+		gl::programs[gl::program::INIT2] = NULL;
+	}
+	gl::programs[gl::program::INIT2] = new Program(1, files);
+	glUseProgram(gl::programs[gl::program::INIT2]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
 
 
-    files[0] = "variances.glsl";
-    if (gl::programs[gl::program::VARIANCES] != NULL)
-    {
-        delete gl::programs[gl::program::VARIANCES];
-        gl::programs[gl::program::VARIANCES] = NULL;
-    }
-    gl::programs[gl::program::VARIANCES] = new Program(1, files);
-    glUseProgram(gl::programs[gl::program::VARIANCES]->program);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "N_SLOPE_VARIANCE"), N_SLOPE_VARIANCE);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "FFT_SIZE"), FFT_SIZE);
+	files[0] = "variances.glsl";
+	if (gl::programs[gl::program::VARIANCES] != NULL)
+	{
+		delete gl::programs[gl::program::VARIANCES];
+		gl::programs[gl::program::VARIANCES] = NULL;
+	}
+	gl::programs[gl::program::VARIANCES] = new Program(1, files);
+	glUseProgram(gl::programs[gl::program::VARIANCES]->program);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "N_SLOPE_VARIANCE"), N_SLOPE_VARIANCE);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "FFT_SIZE"), FFT_SIZE);
 
-    files[0] = "fftx.glsl";
-    if (gl::programs[gl::program::FFTX] != NULL)
-    {
-        delete gl::programs[gl::program::FFTX];
-        gl::programs[gl::program::FFTX] = NULL;
-    }
-    gl::programs[gl::program::FFTX] = new Program(1, files);
-    glProgramParameteriEXT(gl::programs[gl::program::FFTX]->program, GL_GEOMETRY_VERTICES_OUT_EXT, 24);
-    glLinkProgram(gl::programs[gl::program::FFTX]->program);
-    glUseProgram(gl::programs[gl::program::FFTX]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "butterflySampler"), gl::texture::BUTTERFLY);
+	files[0] = "fftx.glsl";
+	if (gl::programs[gl::program::FFTX] != NULL)
+	{
+		delete gl::programs[gl::program::FFTX];
+		gl::programs[gl::program::FFTX] = NULL;
+	}
+	gl::programs[gl::program::FFTX] = new Program(1, files);
+	glProgramParameteriEXT(gl::programs[gl::program::FFTX]->program, GL_GEOMETRY_VERTICES_OUT_EXT, 24);
+	glLinkProgram(gl::programs[gl::program::FFTX]->program);
+	glUseProgram(gl::programs[gl::program::FFTX]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "butterflySampler"), gl::texture::BUTTERFLY);
 
-    files[0] = "ffty.glsl";
-    if (gl::programs[gl::program::FFTY] != NULL)
-    {
-        delete gl::programs[gl::program::FFTY];
-        gl::programs[gl::program::FFTY] = NULL;
-    }
-    gl::programs[gl::program::FFTY] = new Program(1, files);
-    glProgramParameteriEXT(gl::programs[gl::program::FFTY]->program, GL_GEOMETRY_VERTICES_OUT_EXT, 24);
-    glLinkProgram(gl::programs[gl::program::FFTY]->program);
-    glUseProgram(gl::programs[gl::program::FFTY]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "butterflySampler"), gl::texture::BUTTERFLY);
+	files[0] = "ffty.glsl";
+	if (gl::programs[gl::program::FFTY] != NULL)
+	{
+		delete gl::programs[gl::program::FFTY];
+		gl::programs[gl::program::FFTY] = NULL;
+	}
+	gl::programs[gl::program::FFTY] = new Program(1, files);
+	glProgramParameteriEXT(gl::programs[gl::program::FFTY]->program, GL_GEOMETRY_VERTICES_OUT_EXT, 24);
+	glLinkProgram(gl::programs[gl::program::FFTY]->program);
+	glUseProgram(gl::programs[gl::program::FFTY]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "butterflySampler"), gl::texture::BUTTERFLY);
 
-    files[0] = "gaussz.glsl";
-    if (gl::programs[gl::program::GAUSS] != NULL)
-    {
-        delete gl::programs[gl::program::GAUSS];
-        gl::programs[gl::program::GAUSS] = NULL;
-    }
-    gl::programs[gl::program::GAUSS] = new Program(1, files);
+	files[0] = "gaussz.glsl";
+	if (gl::programs[gl::program::GAUSS] != NULL)
+	{
+		delete gl::programs[gl::program::GAUSS];
+		gl::programs[gl::program::GAUSS] = NULL;
+	}
+	gl::programs[gl::program::GAUSS] = new Program(1, files);
 
 	// Back to default pipeline
 	glUseProgram(0);
@@ -1458,34 +1452,6 @@ void redisplayFunc()
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
 
-    /// Todo : compute mipmaps manually ?
-	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PING + 1 - foamPass);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
-
-	// Compute Jacobian EigenVectors and values
-	if(renderJacobians)
-	{
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-		glDrawBuffer(GL_BACK);
-//		glViewport(0,0,FFT_SIZE*TILE_COUNT,FFT_SIZE*TILE_COUNT);
-		glViewport(0,0,window::width,window::height);
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-		glUseProgram(gl::programs[gl::program::JACOBIANS]->program);
-		glUniform1i(glGetUniformLocation(gl::programs[gl::program::JACOBIANS]->program, "jacobianSampler"), gl::texture::FOAM_PING + 1-foamPass);
-		drawQuad();
-		TwDraw();
-		glutSwapBuffers();
-
-		foamPass = 1 - foamPass;
-
-		prevView = view;
-		prevProj = proj;
-		prevwview = wview;
-		prevwproj = wproj;
-		t1 = t0;
-		return;
-	}
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glDrawBuffer(GL_BACK);
@@ -1535,8 +1501,6 @@ void redisplayFunc()
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy"), choppy);
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "choppy_factor"),choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
 //    glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "jacobian_scale"), jacobian_scale);
-
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamSampler"), gl::texture::FOAM_PING + 1-foamPass);
 
 	if (grid)
 	{
@@ -2054,34 +2018,14 @@ int main(int argc, char* argv[])
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, FFT_SIZE, PASSES, 0, GL_RGBA, GL_FLOAT, data);
 	delete[] data;
 
-	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PING);
-	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PING]);
+	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM);
+	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, window::width, window::height, 0, GL_RGBA, GL_FLOAT, NULL);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
-
-	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_PONG);
-	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PONG]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, window::width, window::height, 0, GL_RGBA, GL_FLOAT, NULL);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
-
-	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_DEBUG);
-	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_DEBUG]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, window::width, window::height, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, window::width, window::height, 0, GL_RED, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
 	glActiveTexture(GL_TEXTURE0 + gl::texture::GAUSSZ);
@@ -2108,17 +2052,6 @@ int main(int argc, char* argv[])
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
 	generateWavesSpectrum();
-
-	glActiveTexture(GL_TEXTURE0 + gl::texture::TILE_FOAM);
-    glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, gl::textures[gl::texture::TILE_FOAM]);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_R16F, FFT_SIZE*TILE_COUNT, FFT_SIZE*TILE_COUNT, 3, 0, GL_RED, GL_FLOAT, NULL);
-		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
-
 
 // FrameBuffers
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::VARIANCES]);
@@ -2147,19 +2080,12 @@ int main(int argc, char* argv[])
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
 		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, gl::rbuffers[gl::rbuffer::DEPTH_FBO_JACOBIANS]);
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PING], 0);
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_PONG], 0);
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_DEBUG], 0);
-		GLenum drawBuffers_foam[3] =
-		{
-			GL_COLOR_ATTACHMENT0_EXT,
-			GL_COLOR_ATTACHMENT1_EXT,
-			GL_COLOR_ATTACHMENT2_EXT
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::FOAM], 0);
+		GLenum drawBuffers_foam[1] = {
+			GL_COLOR_ATTACHMENT0_EXT
 		};
 
-		glDrawBuffers(3, drawBuffers_foam);
-//		glClearColor(0.0,0.0,0.0,0.0);
-//		glClear(GL_COLOR_BUFFER_BIT);
+		glDrawBuffers(1, drawBuffers_foam);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::GAUSS]);
 		glDrawBuffers(8, drawBuffers);

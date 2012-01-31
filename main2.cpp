@@ -11,8 +11,6 @@ using namespace std;
 #include "GL/freeglut.h"
 #include "AntTweakBar.h"
 
-#include "glu.hpp"
-
 #include "vec4.h"
 #include "mat4.h"
 #include "Program.h"
@@ -31,15 +29,15 @@ using namespace std;
 #define BUFFER_OFFSET(i) 	((char *)NULL + (i))
 
 double bencher = 0.0;
-double frames = 0.0;
+double frames  = 0.0;
 
 namespace
 {
 // Window Variables
 namespace window
 {
-int width   = 1600;
-int height  = 900;
+int width   = 1280;
+int height  = 720;
 } // namespace window
 
 // GL Variables
@@ -207,7 +205,7 @@ float choppy_factor3 = 2.4f;	// Control Choppiness
 const int N_SLOPE_VARIANCE = 10; // size of the 3d texture containing precomputed filtered slope variances
 float GRID1_SIZE = 5409.0; // size in meters (i.e. in spatial domain) of the first grid
 float GRID2_SIZE = 503.0; // size in meters (i.e. in spatial domain) of the second grid
-float GRID3_SIZE = 51.0; // size in meters (i.e. in spatial domain) of the third grid
+float GRID3_SIZE = 31.0; //51 // size in meters (i.e. in spatial domain) of the third grid
 float GRID4_SIZE = 5.0; // size in meters (i.e. in spatial domain) of the fourth grid
 float WIND = 10.0; // wind speed in meters per second (at 10m above surface)
 float OMEGA = 0.84f; // sea state (inverse wave age)
@@ -1250,10 +1248,7 @@ void drawTessCube(float tess)
     glEnd();
 }
 
-void redisplayFunc()
-{
-//cout << glu::errorString(glGetError()) << endl;
-
+void redisplayFunc() {
 	static double t0 = 0.0;
 	static double t1 = time();
 
@@ -1629,12 +1624,6 @@ void idleFunc() {
 }
 
 void onClean() {
-	GLenum error = glGetError();
-	if(error)
-		std::cout << "GL_ERROR : "
-		          << glu::errorString(error)
-		          << " during runtime\n";
-
 	for(int i = 0; i < gl::program::MAX; ++i)
 		delete gl::programs[i];
 
@@ -1644,13 +1633,6 @@ void onClean() {
 	glDeleteRenderbuffersEXT(gl::rbuffer::MAX, gl::rbuffers);
 
 	glFinish();
-	error = glGetError();
-	if(error)
-		std::cout << "GL_ERROR : "
-		          << error
-		          << ": some objects might not have been cleaned...\n";
-	else
-		std::cout << "Exited Cleanly\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -1659,9 +1641,6 @@ int main(int argc, char* argv[]) {
 	glutInitWindowSize(window::width, window::height);
 	glutCreateWindow("Ocean");
 	glutCreateMenu(NULL);
-
-//	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
-//	glutIgnoreKeyRepeat(1);
 
 	glutDisplayFunc(redisplayFunc);
 	glutReshapeFunc(reshapeFunc);
@@ -1815,11 +1794,7 @@ int main(int argc, char* argv[]) {
     delete[] img;
 
 	img = new unsigned char[256 * 256 + 38];
-//    f = fopen("data/noise/noise_simple_C256.pgm", "rb");
-//    f = fopen("data/noise/noise_marble_C256.pgm", "rb");
     f = fopen("data/noise/noise_iA_C256.pgm", "rb");
-//    f = fopen("data/noise/noise_iA_C256_2.pgm", "rb");
-//    f = fopen("data/noise/noise_A_C256.pgm", "rb");
 	fread(img, 1, 256 * 256 + 38, f);
 	fclose(f);
 	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_SURFACE);
@@ -1973,10 +1948,6 @@ int main(int argc, char* argv[]) {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::SKY]);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::SKY], 0);
-
-//	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::TILE]);
-//		glDrawBuffers(1, drawBuffers);
-//		glFramebufferTexture(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, gl::textures[gl::texture::TILE_FOAM], 0);
 
 	// back to default framebuffer
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);

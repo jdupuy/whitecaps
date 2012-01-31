@@ -42,6 +42,7 @@ void main() {
 	vec2 duy = uy - u;
 
 	umin = min(min(u, ux),uy);
+	umin = u;
 	umax = max(max(u, ux),uy);
 
 	// sum altitudes (use grad to get correct mipmap level)
@@ -80,7 +81,7 @@ float breakingValue(float scale, float mu, float sigma2) {
 }
 
 float foam_primitive(float x) {
-	return 0.5*(x*error_function(x) + exp(-x*x)*inversesqrt(3.14159265)+x);
+	return 0.5*x*error_function(x) + 0.2820947918*exp(-64.0*x*x) + 0.5*x;
 }
 
 
@@ -98,7 +99,7 @@ void main() {
 	float foam  = breakingValue(jacobian_scale, jm.x, jSigma2);
 
 	gl_FragData[0].r = foam;
-#if 0
+#if 1
 	// use erf as main function
 	float jxx0 = texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_XX),0.0).r*choppy_factor.x
 	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_XX),0.0).g*choppy_factor.y
@@ -136,14 +137,12 @@ void main() {
 	float detJ0 = jxx0*jyy0 - jxy0*jxy0;
 	float detJ1 = jxx1*jyy1 - jxy1*jxy1;
 
-	if(gl_FragCoord.x > 800.0)
-//		gl_FragData[0].r = error_function(4.0*(jacobian_scale-jxx0*jyy0+jxy0*jxy0))
-//		                 * 0.5 + 0.5;
-		gl_FragData[0].r = foam_primitive(jacobian_scale-detJ1)
-		                 - foam_primitive(jacobian_scale-detJ0);
+	if(gl_FragCoord.x > 640.0)
+		gl_FragData[0].r = error_function(16.0*(jacobian_scale-detJ0))
+		                 * 0.5 + 0.5;
+//		gl_FragData[0].r = foam_primitive(8.0*jacobian_scale-8.0*detJ1)
+//		                 - foam_primitive(8.0*jacobian_scale-8.0*detJ0);
 
-	if(isnan(gl_FragData[0].r))
-		gl_FragData[0].r = 1.0;
 #endif
 }
 

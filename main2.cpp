@@ -45,8 +45,8 @@ namespace
 // Window Variables
 namespace window
 {
-int width   = 1280;
-int height  = 720;
+int width   = 1600;
+int height  = 900;
 } // namespace window
 
 // GL Variables
@@ -210,7 +210,7 @@ float hdrExposure = 0.4;
 bool grid = false;
 bool animate = true;
 bool seaContrib = true;
-bool sunContrib = true;
+bool sunContrib = false;
 bool skyContrib = true;
 bool foamContrib = true;
 bool manualFilter = false;
@@ -223,10 +223,6 @@ float choppy_factor0 = 2.4f;	// Control Choppiness
 float choppy_factor1 = 2.4f;	// Control Choppiness
 float choppy_factor2 = 2.4f;	// Control Choppiness
 float choppy_factor3 = 2.4f;	// Control Choppiness
-float c0 = 1.0f;	// control wavebreak
-float c1 = 1.0f;	// control wavebreak
-float c2 = 1.0f;	// control wavebreak
-float c3 = 1.0f;	// control wavebreak
 
 // WAVES SPECTRUM
 const int N_SLOPE_VARIANCE = 10; // size of the 3d texture containing precomputed filtered slope variances
@@ -253,13 +249,9 @@ int fftPass = 0;
 float jacobian_scale = -0.1f;//1.20f;
 bool renderJacobians = false;
 int foamPass = 0;
-float foamJmin = 0.0f;
-float foamJmax = 1.0f;
 float foamZmin = 3.23f;
 float foamZmax = 8.70f;
 float foamLifetime = 20.0f;
-float foamGen = 7.1f;
-float foamAmp = 1.0f;
 bool spume = false;
 float displacer = 0.0f;
 const int TILE_COUNT = 8;	// must be a pot
@@ -1149,10 +1141,6 @@ void save(int id)
     out << choppy_factor1 << std::endl;
     out << choppy_factor2 << std::endl;
     out << choppy_factor3 << std::endl;
-    out << c0 << std::endl;
-    out << c1 << std::endl;
-    out << c2 << std::endl;
-    out << c3 << std::endl;
     out << jacobian_scale << std::endl;
     out << foamLifetime << std::endl;
     out.close();
@@ -1207,10 +1195,6 @@ void load(int id)
     in >> choppy_factor1;
     in >> choppy_factor2;
     in >> choppy_factor3;
-    in >> c0;
-    in >> c1;
-    in >> c2;
-    in >> c3;
     in >> jacobian_scale;
     in >> foamLifetime;
     in.close();
@@ -1367,11 +1351,11 @@ void redisplayFunc()
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
 	/// filtering
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::GAUSS]);
-    glViewport(0, 0, FFT_SIZE, FFT_SIZE);
-    glUseProgram(gl::programs[gl::program::GAUSS]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "fftWavesSampler"), gl::texture::FFT_PING);
-    glUniform4f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "choppy"), choppy_factor0*c0, choppy_factor1*c1, choppy_factor2*c2, choppy_factor3*c3);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::GAUSS]);
+	glViewport(0, 0, FFT_SIZE, FFT_SIZE);
+	glUseProgram(gl::programs[gl::program::GAUSS]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "fftWavesSampler"), gl::texture::FFT_PING);
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "choppy"), choppy_factor0, choppy_factor1, choppy_factor2, choppy_factor3);
 
 	drawQuad();
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -1436,7 +1420,7 @@ void redisplayFunc()
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldPos"), wview.inverse()[0][3], wview.inverse()[1][3], wview.inverse()[2][3]);
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
 	glUniform2f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gridSize"), gridSize / float(window::width), gridSize / float(window::height));
-	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0*c0,choppy_factor1*c1,choppy_factor2*c2,choppy_factor3*c3);
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "jacobian_scale"), jacobian_scale);
 
 //	if(animate)

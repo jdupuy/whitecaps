@@ -65,7 +65,7 @@ void main() {
 
 // from http://en.wikipedia.org/wiki/Error_function
 float error_function(float x) {
-	float a = 0.140012;
+	float a  = 0.140012;
 	float pi = 3.14159265;
 	float x2 = x*x;
 	float ax2 = a*x2;
@@ -80,7 +80,7 @@ float breakingValue(float scale, float mu, float sigma2) {
 }
 
 float foam_primitive(float x) {
-	return (x*error_function(x) + exp(-x*x)*inversesqrt(3.14159265));
+	return 0.5*(x*error_function(x) + exp(-x*x)*inversesqrt(3.14159265)+x);
 }
 
 
@@ -100,38 +100,38 @@ void main() {
 	gl_FragData[0].r = foam;
 
 	// use erf as main function
-	float jxx0 = texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_XX)).r*choppy_factor.x
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_XX)).g*choppy_factor.y
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.z, LAYER_JACOBIAN_XX)).b*choppy_factor.z
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.w, LAYER_JACOBIAN_XX)).a*choppy_factor.w
+	float jxx0 = texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_XX),0.0).r*choppy_factor.x
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_XX),0.0).g*choppy_factor.y
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.z, LAYER_JACOBIAN_XX),0.0).b*choppy_factor.z
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.w, LAYER_JACOBIAN_XX),0.0).a*choppy_factor.w
 	           + 1.0;
 
-	float jyy0 = texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_YY)).r*choppy_factor.x
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_YY)).g*choppy_factor.y
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.z, LAYER_JACOBIAN_YY)).b*choppy_factor.z
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.w, LAYER_JACOBIAN_YY)).a*choppy_factor.w
+	float jyy0 = texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_YY),0.0).r*choppy_factor.x
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_YY),0.0).g*choppy_factor.y
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.z, LAYER_JACOBIAN_YY),0.0).b*choppy_factor.z
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.w, LAYER_JACOBIAN_YY),0.0).a*choppy_factor.w
 	           + 1.0;
 
-	float jxy0 = texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_XY)).r*choppy_factor.x
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_XY)).g*choppy_factor.y
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.z, LAYER_JACOBIAN_XY)).b*choppy_factor.z
-	           + texture2DArray(fftWavesSampler, vec3(umin/GRID_SIZES.w, LAYER_JACOBIAN_XY)).a*choppy_factor.w;
+	float jxy0 = texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.x, LAYER_JACOBIAN_XY),0.0).r*choppy_factor.x
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.y, LAYER_JACOBIAN_XY),0.0).g*choppy_factor.y
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.z, LAYER_JACOBIAN_XY),0.0).b*choppy_factor.z
+	           + texture2DArrayLod(fftWavesSampler, vec3(umin/GRID_SIZES.w, LAYER_JACOBIAN_XY),0.0).a*choppy_factor.w;
 
-	float jxx1 = texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.x, LAYER_JACOBIAN_XX)).r*choppy_factor.x
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.y, LAYER_JACOBIAN_XX)).g*choppy_factor.y
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.z, LAYER_JACOBIAN_XX)).b*choppy_factor.z
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.w, LAYER_JACOBIAN_XX)).a*choppy_factor.w
+	float jxx1 = texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.x, LAYER_JACOBIAN_XX),0.0).r*choppy_factor.x
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.y, LAYER_JACOBIAN_XX),0.0).g*choppy_factor.y
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.z, LAYER_JACOBIAN_XX),0.0).b*choppy_factor.z
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.w, LAYER_JACOBIAN_XX),0.0).a*choppy_factor.w
 	           + 1.0;
-	float jyy1 = texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.x, LAYER_JACOBIAN_YY)).r*choppy_factor.x
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.y, LAYER_JACOBIAN_YY)).g*choppy_factor.y
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.z, LAYER_JACOBIAN_YY)).b*choppy_factor.z
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.w, LAYER_JACOBIAN_YY)).a*choppy_factor.w
+	float jyy1 = texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.x, LAYER_JACOBIAN_YY),0.0).r*choppy_factor.x
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.y, LAYER_JACOBIAN_YY),0.0).g*choppy_factor.y
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.z, LAYER_JACOBIAN_YY),0.0).b*choppy_factor.z
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.w, LAYER_JACOBIAN_YY),0.0).a*choppy_factor.w
 	           + 1.0;
 
-	float jxy1 = texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.x, LAYER_JACOBIAN_XY)).r*choppy_factor.x
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.y, LAYER_JACOBIAN_XY)).g*choppy_factor.y
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.z, LAYER_JACOBIAN_XY)).b*choppy_factor.z
-	           + texture2DArray(fftWavesSampler, vec3(umax/GRID_SIZES.w, LAYER_JACOBIAN_XY)).a*choppy_factor.w;
+	float jxy1 = texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.x, LAYER_JACOBIAN_XY),0.0).r*choppy_factor.x
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.y, LAYER_JACOBIAN_XY),0.0).g*choppy_factor.y
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.z, LAYER_JACOBIAN_XY),0.0).b*choppy_factor.z
+	           + texture2DArrayLod(fftWavesSampler, vec3(umax/GRID_SIZES.w, LAYER_JACOBIAN_XY),0.0).a*choppy_factor.w;
 
 	float detJ0 = jxx0*jyy0 - jxy0*jxy0;
 	float detJ1 = jxx1*jyy1 - jxy1*jxy1;
@@ -139,8 +139,8 @@ void main() {
 	if(gl_FragCoord.x > 800.0)
 //		gl_FragData[0].r = error_function(4.0*(jacobian_scale-jxx0*jyy0+jxy0*jxy0))
 //		                 * 0.5 + 0.5;
-		gl_FragData[0].r = foam_primitive(jacobian_scale-detJ0)
-		                 - foam_primitive(jacobian_scale-detJ1);
+		gl_FragData[0].r = foam_primitive(jacobian_scale-detJ1)
+		                 - foam_primitive(jacobian_scale-detJ0);
 
 	if(isnan(gl_FragData[0].r))
 		gl_FragData[0].r = 1.0;

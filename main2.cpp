@@ -352,7 +352,7 @@ void loadPrograms(bool all)
 	files[0] = "atmosphere.glsl";
 	files[1] = "ocean.glsl";
 	sprintf(options, "#define %sSEA_CONTRIB\n#define %sSUN_CONTRIB\n#define %sSKY_CONTRIB\n#define %sCLOUDS\n#define %sHARDWARE_ANISTROPIC_FILTERING\n#define %sFOAM_CONTRIB\n",
-		    seaContrib ? "" : "NO_", sunContrib ? "" : "NO_", skyContrib ? "" : "NO_", cloudLayer ? "" : "NO_", manualFilter ? "NO_" : "", foamContrib ? "" : "NO_");
+	        seaContrib ? "" : "NO_", sunContrib ? "" : "NO_", skyContrib ? "" : "NO_", cloudLayer ? "" : "NO_", manualFilter ? "NO_" : "", foamContrib ? "" : "NO_");
 
 	if (gl::programs[gl::program::RENDER] != NULL)
 	{
@@ -1667,11 +1667,16 @@ int main(int argc, char* argv[]) {
 	TwAddVarCB(tw::bar, "Inv. wave age", TW_TYPE_FLOAT, setFloat, getFloat, &OMEGA, "min=0.84 max=4.99 step=0.01 group=Spectrum");
 	TwAddVarCB(tw::bar, "Propagate", TW_TYPE_BOOL8, setBool2, getBool2, &propagate, "group=Spectrum");
 	TwAddVarCB(tw::bar, "Amplitude", TW_TYPE_FLOAT, setFloat, getFloat, &A, "min=0.01 max=1000.0 step=0.01 group=Spectrum");
+	TwAddVarRW(tw::bar, "Choppy", TW_TYPE_BOOLCPP, &choppy, "group=Spectrum");
+	TwAddVarRW(tw::bar, "ChoppyFactor0", TW_TYPE_FLOAT, &choppy_factor0, "min=0.0 max=100.0 step=0.1 group=Spectrum");
+	TwAddVarRW(tw::bar, "ChoppyFactor1", TW_TYPE_FLOAT, &choppy_factor1, "min=0.0 max=100.0 step=0.1 group=Spectrum");
+	TwAddVarRW(tw::bar, "ChoppyFactor3", TW_TYPE_FLOAT, &choppy_factor2, "min=0.0 max=100.0 step=0.1 group=Spectrum");
+	TwAddVarRW(tw::bar, "ChoppyFactor4", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Spectrum");
 	TwAddButton(tw::bar, "Generate", computeSlopeVarianceTex, NULL, "group=Spectrum");
 
-	TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
-	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
-	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
+//	TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
+//	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
+//	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
 	TwAddVarRW(tw::bar, "Grid size", TW_TYPE_FLOAT, &gridSize, "min=1.0 max=16.0 step=1.0 group=Rendering");
 	TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Rendering");
 	TwAddVarRW(tw::bar, "Exposure", TW_TYPE_FLOAT, &hdrExposure, "min=0.01 max=4.0 step=0.01 group=Rendering");
@@ -1682,11 +1687,6 @@ int main(int argc, char* argv[]) {
 	TwAddVarRW(tw::bar, "Spectrum Zoom", TW_TYPE_FLOAT, &show_spectrum_zoom, "min=0.0 max=1.0 step=0.01 group=Rendering");
 	TwAddVarRW(tw::bar, "Spectrum Linear", TW_TYPE_BOOL8, &show_spectrum_linear, "group=Rendering");
 	TwAddVarRW(tw::bar, "Normals", TW_TYPE_BOOLCPP, &normals, "group=Rendering");
-	TwAddVarRW(tw::bar, "Choppy", TW_TYPE_BOOLCPP, &choppy, "group=Rendering");
-	TwAddVarRW(tw::bar, "ChoppyFactor0", TW_TYPE_FLOAT, &choppy_factor0, "min=0.0 max=100.0 step=0.1 group=Rendering");
-	TwAddVarRW(tw::bar, "ChoppyFactor1", TW_TYPE_FLOAT, &choppy_factor1, "min=0.0 max=100.0 step=0.1 group=Rendering");
-	TwAddVarRW(tw::bar, "ChoppyFactor3", TW_TYPE_FLOAT, &choppy_factor2, "min=0.0 max=100.0 step=0.1 group=Rendering");
-	TwAddVarRW(tw::bar, "ChoppyFactor4", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Rendering");
 	TwAddVarCB(tw::bar, "Sea", TW_TYPE_BOOLCPP, setBool, getBool, &seaContrib, "group=Rendering");
 	TwAddVarCB(tw::bar, "Sun", TW_TYPE_BOOLCPP, setBool, getBool, &sunContrib, "group=Rendering");
 	TwAddVarCB(tw::bar, "Sky", TW_TYPE_BOOLCPP, setBool, getBool, &skyContrib, "group=Rendering");

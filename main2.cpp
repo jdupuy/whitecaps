@@ -749,18 +749,18 @@ void TW_CALL computeSlopeVarianceTex(void *unused)
 
     for (int layer = 0; layer < N_SLOPE_VARIANCE; ++layer)
     {
-        glFramebufferTexture3DEXT(	GL_FRAMEBUFFER_EXT,
-									GL_COLOR_ATTACHMENT0_EXT,
-									GL_TEXTURE_3D,
-									gl::textures[gl::texture::SLOPE_VARIANCE],
-									0,
-									layer	);
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "c"), layer);
-        drawQuad();
-    }
+        glFramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT,
+		                          GL_COLOR_ATTACHMENT0_EXT,
+		                          GL_TEXTURE_3D,
+		                          gl::textures[gl::texture::SLOPE_VARIANCE],
+		                          0,
+		                          layer);
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::VARIANCES]->program, "c"), layer);
+		drawQuad();
+	}
 
-    TwDefine("Parameters color='17 109 143'");
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	TwDefine("Parameters color='17 109 143'");
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
 
 
@@ -770,19 +770,19 @@ void TW_CALL computeSlopeVarianceTex(void *unused)
 
 int bitReverse(int i, int N)
 {
-    int j = i;
-    int M = N;
-    int Sum = 0;
-    int W = 1;
-    M = M / 2;
-    while (M != 0)
-    {
-        j = (i & M) > M - 1;
-        Sum += j * W;
-        W *= 2;
-        M = M / 2;
-    }
-    return Sum;
+	int j = i;
+	int M = N;
+	int Sum = 0;
+	int W = 1;
+	M = M / 2;
+	while (M != 0)
+	{
+		j = (i & M) > M - 1;
+		Sum += j * W;
+		W *= 2;
+		M = M / 2;
+	}
+	return Sum;
 }
 
 void computeWeight(int N, int k, float &Wr, float &Wi)
@@ -793,58 +793,58 @@ void computeWeight(int N, int k, float &Wr, float &Wi)
 
 float *computeButterflyLookupTexture()
 {
-    float *data = new float[FFT_SIZE * PASSES * 4];
+	float *data = new float[FFT_SIZE * PASSES * 4];
 
-    for (int i = 0; i < PASSES; i++)
-    {
-        int nBlocks  = (int) powf(2.0, float(PASSES - 1 - i));
-        int nHInputs = (int) powf(2.0, float(i));
-        for (int j = 0; j < nBlocks; j++)
-        {
-            for (int k = 0; k < nHInputs; k++)
-            {
-                int i1, i2, j1, j2;
-                if (i == 0)
-                {
-                    i1 = j * nHInputs * 2 + k;
-                    i2 = j * nHInputs * 2 + nHInputs + k;
-                    j1 = bitReverse(i1, FFT_SIZE);
-                    j2 = bitReverse(i2, FFT_SIZE);
-                }
-                else
-                {
-                    i1 = j * nHInputs * 2 + k;
-                    i2 = j * nHInputs * 2 + nHInputs + k;
-                    j1 = i1;
-                    j2 = i2;
-                }
+	for (int i = 0; i < PASSES; i++)
+	{
+		int nBlocks  = (int) powf(2.0, float(PASSES - 1 - i));
+		int nHInputs = (int) powf(2.0, float(i));
+		for (int j = 0; j < nBlocks; j++)
+		{
+		    for (int k = 0; k < nHInputs; k++)
+		    {
+		        int i1, i2, j1, j2;
+		        if (i == 0)
+		        {
+		            i1 = j * nHInputs * 2 + k;
+		            i2 = j * nHInputs * 2 + nHInputs + k;
+		            j1 = bitReverse(i1, FFT_SIZE);
+		            j2 = bitReverse(i2, FFT_SIZE);
+		        }
+		        else
+		        {
+		            i1 = j * nHInputs * 2 + k;
+		            i2 = j * nHInputs * 2 + nHInputs + k;
+		            j1 = i1;
+		            j2 = i2;
+		        }
 
-                float wr, wi;
-                computeWeight(FFT_SIZE, k * nBlocks, wr, wi);
+		        float wr, wi;
+		        computeWeight(FFT_SIZE, k * nBlocks, wr, wi);
 
-                int offset1 = 4 * (i1 + i * FFT_SIZE);
-                data[offset1 + 0] = (j1 + 0.5) / FFT_SIZE;
-                data[offset1 + 1] = (j2 + 0.5) / FFT_SIZE;
-                data[offset1 + 2] = wr;
-                data[offset1 + 3] = wi;
+		        int offset1 = 4 * (i1 + i * FFT_SIZE);
+		        data[offset1 + 0] = (j1 + 0.5) / FFT_SIZE;
+		        data[offset1 + 1] = (j2 + 0.5) / FFT_SIZE;
+		        data[offset1 + 2] = wr;
+		        data[offset1 + 3] = wi;
 
-                int offset2 = 4 * (i2 + i * FFT_SIZE);
-                data[offset2 + 0] = (j1 + 0.5) / FFT_SIZE;
-                data[offset2 + 1] = (j2 + 0.5) / FFT_SIZE;
-                data[offset2 + 2] = -wr;
-                data[offset2 + 3] = -wi;
-            }
-        }
-    }
+		        int offset2 = 4 * (i2 + i * FFT_SIZE);
+		        data[offset2 + 0] = (j1 + 0.5) / FFT_SIZE;
+		        data[offset2 + 1] = (j2 + 0.5) / FFT_SIZE;
+		        data[offset2 + 2] = -wr;
+		        data[offset2 + 3] = -wi;
+		    }
+		}
+	}
 
-    return data;
+	return data;
 }
 
 void simulateFFTWaves(float t)
 {
-    // init
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT0]);
-    for (int i = 0; i < 8; ++i)
+	// init
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT0]);
+	for (int i = 0; i < 8; ++i)
 	{
 		glFramebufferTextureLayerEXT(   GL_FRAMEBUFFER_EXT,
 										GL_COLOR_ATTACHMENT0_EXT + i,
@@ -853,187 +853,187 @@ void simulateFFTWaves(float t)
 										i);
 	}
 	GLenum drawBuffers[8] =
-    {
-        GL_COLOR_ATTACHMENT0_EXT,
-        GL_COLOR_ATTACHMENT1_EXT,
-        GL_COLOR_ATTACHMENT2_EXT,
-        GL_COLOR_ATTACHMENT3_EXT,
-        GL_COLOR_ATTACHMENT4_EXT,
-        GL_COLOR_ATTACHMENT5_EXT,
-        GL_COLOR_ATTACHMENT6_EXT,
-        GL_COLOR_ATTACHMENT7_EXT
-    };
-    glDrawBuffers(choppy ? 8 : 3, drawBuffers);
-    glViewport(0, 0, FFT_SIZE, FFT_SIZE);
+	{
+		GL_COLOR_ATTACHMENT0_EXT,
+		GL_COLOR_ATTACHMENT1_EXT,
+		GL_COLOR_ATTACHMENT2_EXT,
+		GL_COLOR_ATTACHMENT3_EXT,
+		GL_COLOR_ATTACHMENT4_EXT,
+		GL_COLOR_ATTACHMENT5_EXT,
+		GL_COLOR_ATTACHMENT6_EXT,
+		GL_COLOR_ATTACHMENT7_EXT
+	};
+	glDrawBuffers(choppy ? 8 : 3, drawBuffers);
+	glViewport(0, 0, FFT_SIZE, FFT_SIZE);
 
-    glUseProgram(gl::programs[gl::program::INIT]->program);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "FFT_SIZE"),FFT_SIZE);
-    glUniform4f(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "INVERSE_GRID_SIZES"),
-                2.0 * M_PI * FFT_SIZE / GRID1_SIZE,
-                2.0 * M_PI * FFT_SIZE / GRID2_SIZE,
-                2.0 * M_PI * FFT_SIZE / GRID3_SIZE,
-                2.0 * M_PI * FFT_SIZE / GRID4_SIZE);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "t"), t);
-    drawQuad();
+	glUseProgram(gl::programs[gl::program::INIT]->program);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "FFT_SIZE"),FFT_SIZE);
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "INVERSE_GRID_SIZES"),
+		        2.0 * M_PI * FFT_SIZE / GRID1_SIZE,
+		        2.0 * M_PI * FFT_SIZE / GRID2_SIZE,
+		        2.0 * M_PI * FFT_SIZE / GRID3_SIZE,
+		        2.0 * M_PI * FFT_SIZE / GRID4_SIZE);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "t"), t);
+	drawQuad();
 
     // fft passes
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
 //    glClearColor(1.0,0.0,0.0,0.0);
 //    glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(gl::programs[gl::program::FFTX]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "nLayers"), choppy ? 8 : 3);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "sLayer"), 0);
-    for (int i = 0; i < PASSES; ++i)
-    {
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "pass"), float(i + 0.5) / PASSES);
-        if (i%2 == 0)
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PING);
-            glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-        }
-        else
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PONG);
-            glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-        }
-        drawQuad();
-    }
+	glUseProgram(gl::programs[gl::program::FFTX]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "nLayers"), choppy ? 8 : 3);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "sLayer"), 0);
+	for (int i = 0; i < PASSES; ++i)
+	{
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "pass"), float(i + 0.5) / PASSES);
+		if (i%2 == 0)
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PING);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
+		}
+		else
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PONG);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		}
+		drawQuad();
+	}
 
 
-    glUseProgram(gl::programs[gl::program::FFTY]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "nLayers"), choppy ? 8 : 3);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "sLayer"), 0);
-    for (int i = PASSES; i < 2 * PASSES; ++i)
-    {
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "pass"), float(i - PASSES + 0.5) / PASSES);
-        if (i%2 == 0)
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PING);
-            glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-        }
-        else
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PONG);
-            glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-        }
-        drawQuad();
-    }
+	glUseProgram(gl::programs[gl::program::FFTY]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "nLayers"), choppy ? 8 : 3);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "sLayer"), 0);
+	for (int i = PASSES; i < 2 * PASSES; ++i)
+	{
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "pass"), float(i - PASSES + 0.5) / PASSES);
+		if (i%2 == 0)
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PING);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
+		}
+		else
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PONG);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		}
+		drawQuad();
+	}
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 //	fftPass = 1 - fftPass;
 }
 
 void simulateFFTWaves2(float t)
 {
-    // init
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT0]);
-    for (int i = 0; i < 1; ++i)
+	// init
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT0]);
+	for (int i = 0; i < 1; ++i)
 	{
-		glFramebufferTextureLayerEXT(   GL_FRAMEBUFFER_EXT,
-										GL_COLOR_ATTACHMENT0_EXT + i,
-										gl::textures[gl::texture::FFT_PING],
-										0,
-										8+i);
+		glFramebufferTextureLayerEXT(GL_FRAMEBUFFER_EXT,
+		                             GL_COLOR_ATTACHMENT0_EXT + i,
+		                             gl::textures[gl::texture::FFT_PING],
+		                             0,
+		                             8+i);
 	}
 	GLenum drawBuffers[2] =
-    {
-        GL_COLOR_ATTACHMENT0_EXT,
-        GL_COLOR_ATTACHMENT1_EXT,
-    };
-    glDrawBuffers(2, drawBuffers);
+	{
+		GL_COLOR_ATTACHMENT0_EXT,
+		GL_COLOR_ATTACHMENT1_EXT,
+	};
+	glDrawBuffers(2, drawBuffers);
 
-    glViewport(0, 0, FFT_SIZE, FFT_SIZE);
+	glViewport(0, 0, FFT_SIZE, FFT_SIZE);
 
-    glUseProgram(gl::programs[gl::program::INIT2]->program);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "FFT_SIZE"),FFT_SIZE);
-    glUniform4f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "INVERSE_GRID_SIZES"),
-                2.0 * M_PI * FFT_SIZE / GRID1_SIZE,
-                2.0 * M_PI * FFT_SIZE / GRID2_SIZE,
-                2.0 * M_PI * FFT_SIZE / GRID3_SIZE,
-                2.0 * M_PI * FFT_SIZE / GRID4_SIZE);
-    glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "t"), t);
-    drawQuad();
+	glUseProgram(gl::programs[gl::program::INIT2]->program);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "FFT_SIZE"),FFT_SIZE);
+	glUniform4f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "INVERSE_GRID_SIZES"),
+		        2.0 * M_PI * FFT_SIZE / GRID1_SIZE,
+		        2.0 * M_PI * FFT_SIZE / GRID2_SIZE,
+		        2.0 * M_PI * FFT_SIZE / GRID3_SIZE,
+		        2.0 * M_PI * FFT_SIZE / GRID4_SIZE);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "t"), t);
+	drawQuad();
 
-    // fft passes
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
+	// fft passes
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
 //    glClearColor(0.0,0.0,0.0,0.0);
 //    glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(gl::programs[gl::program::FFTX]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "sLayer"), 8);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "nLayers"), 1);
-    for (int i = 0; i < PASSES; ++i)
-    {
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "pass"), float(i + 0.5) / PASSES);
-        if (i%2 == 0)
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PING);
-            glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-        }
-        else
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PONG);
-            glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-        }
-        drawQuad();
-    }
-    glUseProgram(gl::programs[gl::program::FFTY]->program);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "sLayer"), 8);
-    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "nLayers"), 1);
-    for (int i = PASSES; i < 2 * PASSES; ++i)
-    {
-        glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "pass"), float(i - PASSES + 0.5) / PASSES);
-        if (i%2 == 0)
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PING);
-            glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-        }
-        else
-        {
-            glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PONG);
-            glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-        }
-        drawQuad();
-    }
+	glUseProgram(gl::programs[gl::program::FFTX]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "sLayer"), 8);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "nLayers"), 1);
+	for (int i = 0; i < PASSES; ++i)
+	{
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "pass"), float(i + 0.5) / PASSES);
+		if (i%2 == 0)
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PING);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
+		}
+		else
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PONG);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		}
+		drawQuad();
+	}
+	glUseProgram(gl::programs[gl::program::FFTY]->program);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "sLayer"), 8);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "nLayers"), 1);
+	for (int i = PASSES; i < 2 * PASSES; ++i)
+	{
+		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "pass"), float(i - PASSES + 0.5) / PASSES);
+		if (i%2 == 0)
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PING);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
+		}
+		else
+		{
+		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PONG);
+		    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		}
+		drawQuad();
+	}
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 	fftPass = 1 - fftPass;
 }
 
 void TW_CALL getFloat(void *value, void *clientData)
 {
-    *((float*) value) = *((float*) clientData);
+	*((float*) value) = *((float*) clientData);
 }
 
 void TW_CALL setFloat(const void *value, void *clientData)
 {
-    *((float*) clientData) = *((float*) value);
-    generateWavesSpectrum();
+	*((float*) clientData) = *((float*) value);
+	generateWavesSpectrum();
 }
 
 void TW_CALL getInt(void *value, void *clientData)
 {
-    *((int*) value) = *((int*) clientData);
+	*((int*) value) = *((int*) clientData);
 }
 
 void TW_CALL setInt(const void *value, void *clientData)
 {
-    *((int*) clientData) = *((int*) value);
-    generateWavesSpectrum();
+	*((int*) clientData) = *((int*) value);
+	generateWavesSpectrum();
 }
 
 void TW_CALL getBool2(void *value, void *clientData)
 {
-    *((bool*) value) = *((bool*) clientData);
+	*((bool*) value) = *((bool*) clientData);
 }
 
 void TW_CALL setBool2(const void *value, void *clientData)
 {
-    *((bool*) clientData) = *((bool*) value);
-    generateWavesSpectrum();
+	*((bool*) clientData) = *((bool*) value);
+	generateWavesSpectrum();
 }
 
 
@@ -1061,192 +1061,135 @@ void scaleFrustum(float l, float fovy, float aspect, float zNear, float zFar, co
 
 void save(int id)
 {
-    char buf[256];
-    sprintf(buf, "data/scene%d.dat", id);
-    std::ofstream out;
-    out.open(buf);
-    out << cloudLayer << std::endl;
-    out << octaves << std::endl;
-    out << lacunarity << std::endl;
-    out << gain << std::endl;
-    out << norm << std::endl;
-    out << clamp1 << std::endl;
-    out << clamp2 << std::endl;
-    out << cloudColor[0] << std::endl;
-    out << cloudColor[1] << std::endl;
-    out << cloudColor[2] << std::endl;
-    out << cloudColor[3] << std::endl;
-    out << sunTheta << std::endl;
-    out << sunPhi << std::endl;
-    out << camera::z << std::endl;
-    out << camera::theta << std::endl;
-    out << camera::phi << std::endl;
-    out << gridSize << std::endl;
-    out << seaColor[0] << std::endl;
-    out << seaColor[1] << std::endl;
-    out << seaColor[2] << std::endl;
-    out << seaColor[3] << std::endl;
-    out << hdrExposure << std::endl;
-    out << grid << std::endl;
-    out << animate << std::endl;
-    out << seaContrib << std::endl;
-    out << sunContrib << std::endl;
-    out << skyContrib << std::endl;
-    out << foamContrib << std::endl;
-    out << manualFilter << std::endl;
-    out << choppy << std::endl;
-    out << GRID1_SIZE << std::endl;
-    out << GRID2_SIZE << std::endl;
-    out << GRID3_SIZE << std::endl;
-    out << GRID4_SIZE << std::endl;
-    out << WIND << std::endl;
-    out << OMEGA << std::endl;
-    out << propagate << std::endl;
-    out << A << std::endl;
-    out << choppy_factor0 << std::endl;
-    out << choppy_factor1 << std::endl;
-    out << choppy_factor2 << std::endl;
-    out << choppy_factor3 << std::endl;
-    out << jacobian_scale << std::endl;
-    out.close();
+	char buf[256];
+	sprintf(buf, "data/scene%d.dat", id);
+	std::ofstream out;
+	out.open(buf);
+	out << cloudLayer << std::endl;
+	out << octaves << std::endl;
+	out << lacunarity << std::endl;
+	out << gain << std::endl;
+	out << norm << std::endl;
+	out << clamp1 << std::endl;
+	out << clamp2 << std::endl;
+	out << cloudColor[0] << std::endl;
+	out << cloudColor[1] << std::endl;
+	out << cloudColor[2] << std::endl;
+	out << cloudColor[3] << std::endl;
+	out << sunTheta << std::endl;
+	out << sunPhi << std::endl;
+	out << camera::z << std::endl;
+	out << camera::theta << std::endl;
+	out << camera::phi << std::endl;
+	out << gridSize << std::endl;
+	out << seaColor[0] << std::endl;
+	out << seaColor[1] << std::endl;
+	out << seaColor[2] << std::endl;
+	out << seaColor[3] << std::endl;
+	out << hdrExposure << std::endl;
+	out << grid << std::endl;
+	out << animate << std::endl;
+	out << seaContrib << std::endl;
+	out << sunContrib << std::endl;
+	out << skyContrib << std::endl;
+	out << foamContrib << std::endl;
+	out << manualFilter << std::endl;
+	out << choppy << std::endl;
+	out << GRID1_SIZE << std::endl;
+	out << GRID2_SIZE << std::endl;
+	out << GRID3_SIZE << std::endl;
+	out << GRID4_SIZE << std::endl;
+	out << WIND << std::endl;
+	out << OMEGA << std::endl;
+	out << propagate << std::endl;
+	out << A << std::endl;
+	out << choppy_factor0 << std::endl;
+	out << choppy_factor1 << std::endl;
+	out << choppy_factor2 << std::endl;
+	out << choppy_factor3 << std::endl;
+	out << jacobian_scale << std::endl;
+	out.close();
 }
 
 void load(int id)
 {
-    char buf[256];
-    sprintf(buf, "data/scene%d.dat", id);
-    std::ifstream in;
-    in.open(buf);
+	char buf[256];
+	sprintf(buf, "data/scene%d.dat", id);
+	std::ifstream in;
+	in.open(buf);
 
-    in >> cloudLayer;
-    in >> octaves;
-    in >> lacunarity;
-    in >> gain;
-    in >> norm;
-    in >> clamp1;
-    in >> clamp2;
-    in >> cloudColor[0];
-    in >> cloudColor[1];
-    in >> cloudColor[2];
-    in >> cloudColor[3];
-    in >> sunTheta;
-    in >> sunPhi;
-    in >> camera::z;
-    in >> camera::theta;
-    in >> camera::phi;
-    in >> gridSize;
-    in >> seaColor[0];
-    in >> seaColor[1];
-    in >> seaColor[2];
-    in >> seaColor[3];
-    in >> hdrExposure;
-    in >> grid;
-    in >> animate;
-    in >> seaContrib;
-    in >> sunContrib;
-    in >> skyContrib;
-    in >> foamContrib;
-    in >> manualFilter;
-    in >> choppy;
-    in >> GRID1_SIZE;
-    in >> GRID2_SIZE;
-    in >> GRID3_SIZE;
-    in >> GRID4_SIZE;
-    in >> WIND;
-    in >> OMEGA;
-    in >> propagate;
-    in >> A;
-    in >> choppy_factor0;
-    in >> choppy_factor1;
-    in >> choppy_factor2;
-    in >> choppy_factor3;
-    in >> jacobian_scale;
-    in.close();
-    generateMesh();
-    generateWavesSpectrum();
-    computeSlopeVarianceTex(NULL);
-    loadPrograms(true);
-    TwRefreshBar(tw::bar);
+	in >> cloudLayer;
+	in >> octaves;
+	in >> lacunarity;
+	in >> gain;
+	in >> norm;
+	in >> clamp1;
+	in >> clamp2;
+	in >> cloudColor[0];
+	in >> cloudColor[1];
+	in >> cloudColor[2];
+	in >> cloudColor[3];
+	in >> sunTheta;
+	in >> sunPhi;
+	in >> camera::z;
+	in >> camera::theta;
+	in >> camera::phi;
+	in >> gridSize;
+	in >> seaColor[0];
+	in >> seaColor[1];
+	in >> seaColor[2];
+	in >> seaColor[3];
+	in >> hdrExposure;
+	in >> grid;
+	in >> animate;
+	in >> seaContrib;
+	in >> sunContrib;
+	in >> skyContrib;
+	in >> foamContrib;
+	in >> manualFilter;
+	in >> choppy;
+	in >> GRID1_SIZE;
+	in >> GRID2_SIZE;
+	in >> GRID3_SIZE;
+	in >> GRID4_SIZE;
+	in >> WIND;
+	in >> OMEGA;
+	in >> propagate;
+	in >> A;
+	in >> choppy_factor0;
+	in >> choppy_factor1;
+	in >> choppy_factor2;
+	in >> choppy_factor3;
+	in >> jacobian_scale;
+	in.close();
+	generateMesh();
+	generateWavesSpectrum();
+	computeSlopeVarianceTex(NULL);
+	loadPrograms(true);
+	TwRefreshBar(tw::bar);
 }
 
 // get time in seconds
 double time()
 {
 #ifdef _WIN32
-    __int64 time;
-    __int64 cpuFrequency;
-    QueryPerformanceCounter((LARGE_INTEGER*) &time);
-    QueryPerformanceFrequency((LARGE_INTEGER*) &cpuFrequency);
-    return time / double(cpuFrequency);
+	__int64 time;
+	__int64 cpuFrequency;
+	QueryPerformanceCounter((LARGE_INTEGER*) &time);
+	QueryPerformanceFrequency((LARGE_INTEGER*) &cpuFrequency);
+	return time / double(cpuFrequency);
 #else
-    static double t0 = 0;
-    timeval tv;
-    gettimeofday(&tv, NULL);
-    if (!t0)
-    {
-        t0 = tv.tv_sec;
-    }
-    return double(tv.tv_sec-t0) + double(tv.tv_usec) / 1e6;
+	static double t0 = 0;
+	timeval tv;
+	gettimeofday(&tv, NULL);
+	if (!t0)
+	{
+		t0 = tv.tv_sec;
+	}
+	return double(tv.tv_sec-t0) + double(tv.tv_usec) / 1e6;
 #endif
 }
 
-
-void drawTessCube(float tess)
-{
-    const float val = 1.0f/tess;
-    glBegin(GL_QUADS);
-    for(float j = -1.0f; j < 1.0f; j+=val)
-        for(float i = -1.0f; i < 1.0f; i+=val)
-        {
-            glVertex3f(i, 1.0f, j+val);
-            glVertex3f(i+val, 1.0f, j+val);
-            glVertex3f(i+val, 1.0f, j);
-            glVertex3f(i, 1.0f, j);
-        }
-    for(float j = -1.0f; j < 1.0f; j+=val)
-        for(float i = -1.0f; i < 1.0f; i+=val)
-        {
-            glVertex3f(i, -1.0f, j);
-            glVertex3f(i+val, -1.0f, j);
-            glVertex3f(i+val, -1.0f, j+val);
-            glVertex3f(i, -1.0f, j+val);
-        }
-
-    for(float j = -1.0f; j < 1.0f; j+=val)
-        for(float i = -1.0f; i < 1.0f; i+=val)
-        {
-            glVertex3f(1.0f, i, j);
-            glVertex3f(1.0f, i+val,  j);
-            glVertex3f(1.0f, i+val, j+val);
-            glVertex3f(1.0f, i, j+val);
-        }
-    for(float j = -1.0f; j < 1.0f; j+=val)
-        for(float i = -1.0f; i < 1.0f; i+=val)
-        {
-            glVertex3f(-1.0f, i, j+val);
-            glVertex3f(-1.0f, i+val, j+val);
-            glVertex3f(-1.0f, i+val,  j);
-            glVertex3f(-1.0f, i, j);
-        }
-    for(float j = -1.0f; j < 1.0f; j+=val)
-        for(float i = -1.0f; i < 1.0f; i+=val)
-        {
-            glVertex3f(i, j+val, -1.0f);
-            glVertex3f(i+val, j+val, -1.0f);
-            glVertex3f(i+val, j, -1.0f);
-            glVertex3f(i, j, -1.0f);
-        }
-    for(float j = -1.0f; j < 1.0f; j+=val)
-        for(float i = -1.0f; i < 1.0f; i+=val)
-        {
-            glVertex3f(i, j, 1.0f);
-            glVertex3f(i+val, j, 1.0f);
-            glVertex3f(i+val, j+val, 1.0f);
-            glVertex3f(i, j+val, 1.0f);
-        }
-
-    glEnd();
-}
 
 void redisplayFunc() {
 	static double t0 = 0.0;
@@ -1494,79 +1437,60 @@ void reshapeFunc(int x, int y) {
 }
 
 void keyboardFunc(unsigned char c, int x, int y) {
-	if (TwEventKeyboardGLUT(c, x, y))
-	{
+	if (TwEventKeyboardGLUT(c, x, y)) {
 		return;
 	}
 
-	if(c == 27)
-	{
+	if(c == 27) {
 		::exit(0);
 	}
-	if (c == '+')
-	{
-		camera::theta = min(camera::theta + 5.0f, 90.0f - 0.001f);
+	if (c == '+') {
+		camera::theta = min(camera::theta + 0.2f, 90.0f - 0.001f);
 	}
-	if (c == '-')
-	{
-		camera::theta = camera::theta - 5.0;
-		if(camera::theta < -45.0)
-			camera::theta = -45.0;
+	if (c == '-'){
+		camera::theta = max(camera::theta - 0.2f, -45.0f);
 	}
-	if (c >= '1' && c <= '9')
-	{
+	if (c >= '1' && c <= '9') {
 		save(c - '0');
 	}
-	if (c == 'z')
-	{
+	if (c == 'z') {
 		camera::vely = max(-1.0f, camera::vely - 1.0f);
 	}
-	if (c == 's')
-	{
+	if (c == 's') {
 		camera::vely = min(1.0f, camera::vely + 1.0f);
 	}
-	if (c == 'q')
-	{
+	if (c == 'q') {
 		camera::velx = max(-1.0f, camera::velx - 1.0f);
 	}
-	if (c == 'd')
-	{
+	if (c == 'd') {
 		camera::velx = min(1.0f, camera::velx + 1.0f);
 	}
-	if (c == 'e')
-	{
+	if (c == 'e') {
 		camera::velz = max(-1.0f, camera::velz - 1.0f);
 	}
-	if (c == 'a')
-	{
+	if (c == 'a') {
 		camera::velz = min(1.0f, camera::velz + 1.0f);
 	}
 }
 
 
 void keyboardUpFunc(unsigned char c, int x, int y) {
-	if (c == 'z')
-	{
+	if (c == 'z') {
 		camera::vely = min(1.0f, camera::vely + 1.0f);
 	}
-	if (c == 's')
-	{
+	if (c == 's') {
 		camera::vely = max(-1.0f, camera::vely - 1.0f);
 	}
-	if (c == 'q')
-	{
+	if (c == 'q') {
 		camera::velx = min(1.0f, camera::velx + 1.0f);
 	}
-	if (c == 'd')
-	{
+	if (c == 'd') {
 		camera::velx = max(-1.0f, camera::velx - 1.0f);
 	}
-	if (c == 'e')
-	{
+	if (c == 'e') {
 		camera::velz = min(1.0f, camera::velz + 1.0f);
 	}
-	if (c == 'a')
-	{
+	if (c == 'a') {
 		camera::velz = max(-1.0f, camera::velz - 1.0f);
 	}
 }

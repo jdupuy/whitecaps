@@ -439,7 +439,7 @@ void main() {
 	float l2 = length(Lsun + Esky) / M_PI;
 
 	vec3 R_ftot = vec3(x_b * wData.r * l * 0.4);//* exp(-(1.0-x_b * wData.r)*2.0*vec3(0.34, 0.032, 0.011));
-	gl_FragColor.rgb += R_ftot;// + (1.0-wData.r)*Rs + (1.0-R_ftot)*Ru;//* x0;// * x_b;
+	gl_FragColor.rgb += R_ftot*4.0;// + (1.0-wData.r)*Rs + (1.0-R_ftot)*Ru;//* x0;// * x_b;
 
 
 /// Raytrace the surface and add foam (if any)

@@ -1445,10 +1445,10 @@ void keyboardFunc(unsigned char c, int x, int y) {
 		::exit(0);
 	}
 	if (c == '+') {
-		camera::theta = min(camera::theta + 0.2f, 90.0f - 0.001f);
+		camera::theta = min(camera::theta + 1.0f, 90.0f - 0.001f);
 	}
 	if (c == '-'){
-		camera::theta = max(camera::theta - 0.2f, -45.0f);
+		camera::theta = max(camera::theta - 1.0f, -45.0f);
 	}
 	if (c >= '1' && c <= '9') {
 		save(c - '0');

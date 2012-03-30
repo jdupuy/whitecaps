@@ -105,28 +105,10 @@ void main() {
         dP.xy += vec2(choppy_factor.z)*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.z, 4.0), dux / GRID_SIZES.z, duy / GRID_SIZES.z).xy;
         dP.xy += vec2(choppy_factor.w)*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.w, 4.0), dux / GRID_SIZES.w, duy / GRID_SIZES.w).zw;
     }
-
-
     P = vec3(u + dP.xy, dP.z);
-
-//	u.x+=1.0;
-
-//
-//	float jeval = texture2D(foamSampler, ufg).a;
-//	vec2 jevec = texture2D(foamSampler, ufg).gb;
-
-//u.x+=2.0*min(jeval, 0.0);
 
 	// Final position
 	gl_Position = worldToScreen * vec4(P, 1.0);
-//	gl_Position = gl_Vertex;
-
-//	if(jeval > 0.0)
-//		gl_Position = worldToScreen * vec4(P, 1.0);
-//	else
-//	{
-//		gl_Position = worldToScreen * vec4(P.xy + jevec*0.5, P.z, 1.0);
-//	}
 }
 
 #endif
@@ -149,7 +131,7 @@ float Lambda(float cosTheta, float sigmaSq) {
 }
 
 // L, V, N, Tx, Ty in world space
-float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq) {
+float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq, out float p) {
     vec3 H = normalize(L + V);
     float zetax = dot(H, Tx) / dot(H, N);
     float zetay = dot(H, Ty) / dot(H, N);
@@ -159,7 +141,8 @@ float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaS
     float zH = dot(H, N); // cos of facet normal zenith angle
     float zH2 = zH * zH;
 
-    float p = exp(-0.5 * (zetax * zetax / sigmaSq.x + zetay * zetay / sigmaSq.y)) / (2.0 * M_PI * sqrt(sigmaSq.x * sigmaSq.y));
+    /*float*/ p = exp(-0.5 * (zetax * zetax / sigmaSq.x + zetay * zetay / sigmaSq.y))
+                / (2.0 * M_PI * sqrt(sigmaSq.x * sigmaSq.y));
 
     float tanV = atan(dot(V, Ty), dot(V, Tx));
     float cosV2 = 1.0 / (1.0 + tanV * tanV);
@@ -279,12 +262,12 @@ vec3 meanSkyRadiance(vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq) {
 
 void main() {
 
-    vec3 V = normalize(worldCamera - P);
+	vec3 V = normalize(worldCamera - P);
 
-    vec2 slopes = texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.x, 1.0)).xy;
-    slopes += texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.y, 1.0)).zw;
-    slopes += texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.z, 2.0)).xy;
-    slopes += texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.w, 2.0)).zw;
+	vec2 slopes = texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.x, 1.0)).xy;
+	slopes += texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.y, 1.0)).zw;
+	slopes += texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.z, 2.0)).xy;
+	slopes += texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.w, 2.0)).zw;
 
 	if(choppy > 0.0)
 	{
@@ -304,93 +287,75 @@ void main() {
 		float Jyy4 = texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.w, LAYER_JACOBIAN_YY)).a;
 		Jyy = dot((lambda), vec4(Jyy1,Jyy2,Jyy3,Jyy4));
 
-//		// Jxy1..4 : partial Jxy
-//		float Jxy1 = texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.x, LAYER_JACOBIAN_XY)).r;
-//		float Jxy2 = texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.y, LAYER_JACOBIAN_XY)).g;
-//		float Jxy3 = texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.z, LAYER_JACOBIAN_XY)).b;
-//		float Jxy4 = texture2DArray(fftWavesSampler, vec3(u / GRID_SIZES.w, LAYER_JACOBIAN_XY)).a;
-//		Jxy = dot((lambda),vec4(Jxy1, Jxy2, Jxy3, Jxy4));
-//		if(gl_FragCoord.x > 390.0 && gl_FragCoord.x < 400.0)
-//			return;
-//
-//		if(gl_FragCoord.x > 450.0)
-			slopes /= (1.0 + vec2(Jxx, Jyy));
+		slopes /= (1.0 + vec2(Jxx, Jyy));
 	}
 
-    vec3 N = normalize(vec3(-slopes.x, -slopes.y, 1.0));
-    if (dot(V, N) < 0.0) {
-        N = reflect(N, V); // reflects backfacing normals
-    }
+	vec3 N = normalize(vec3(-slopes.x, -slopes.y, 1.0));
+	if (dot(V, N) < 0.0) {
+		N = reflect(N, V); // reflects backfacing normals
+	}
 
-//	if(P.x<2.0 && P.x > -2.0 && P.y < 2.0 && P.y > -2.0)
-//		N = vec3(0.0,0.0,1.0);
+	float Jxx = dFdx(u.x);
+	float Jxy = dFdy(u.x);
+	float Jyx = dFdx(u.y);
+	float Jyy = dFdy(u.y);
+	float A = Jxx * Jxx + Jyx * Jyx;
+	float B = Jxx * Jxy + Jyx * Jyy;
+	float C = Jxy * Jxy + Jyy * Jyy;
+	const float SCALE = 10.0;
+	float ua = pow(A / SCALE, 0.25);
+	float ub = 0.5 + 0.5 * B / sqrt(A * C);
+	float uc = pow(C / SCALE, 0.25);
+	vec2 sigmaSq = texture3D(slopeVarianceSampler, vec3(ua, ub, uc)).xw;
 
-    float Jxx = dFdx(u.x);
-    float Jxy = dFdy(u.x);
-    float Jyx = dFdx(u.y);
-    float Jyy = dFdy(u.y);
-    float A = Jxx * Jxx + Jyx * Jyx;
-    float B = Jxx * Jxy + Jyx * Jyy;
-    float C = Jxy * Jxy + Jyy * Jyy;
-    const float SCALE = 10.0;
-    float ua = pow(A / SCALE, 0.25);
-    float ub = 0.5 + 0.5 * B / sqrt(A * C);
-    float uc = pow(C / SCALE, 0.25);
-    vec2 sigmaSq = texture3D(slopeVarianceSampler, vec3(ua, ub, uc)).xw;
+	sigmaSq = max(sigmaSq, 2e-5);
 
-    sigmaSq = max(sigmaSq, 2e-5);
-
-    vec3 Ty = normalize(vec3(0.0, N.z, -N.y));
-    vec3 Tx = cross(Ty, N);
+	vec3 Ty = normalize(vec3(0.0, N.z, -N.y));
+	vec3 Tx = cross(Ty, N);
 
 	vec3 Rf = vec3(0.0);
 	vec3 Rs = vec3(0.0);
 	vec3 Ru = vec3(0.0);
+	float p = 1.0;
 
 #if defined(SEA_CONTRIB) || defined(SKY_CONTRIB)
-    float fresnel = 0.02 + 0.98 * meanFresnel(V, N, sigmaSq);
+	float fresnel = 0.02 + 0.98 * meanFresnel(V, N, sigmaSq);
 #endif
 
-    vec3 Lsun;
-    vec3 Esky;
-    vec3 extinction;
-    sunRadianceAndSkyIrradiance(worldCamera + earthPos, worldSunDir, Lsun, Esky);
+	vec3 Lsun;
+	vec3 Esky;
+	vec3 extinction;
+	sunRadianceAndSkyIrradiance(worldCamera + earthPos, worldSunDir, Lsun, Esky);
 
-    gl_FragColor = vec4(0.0);
+	gl_FragColor = vec4(0.0);
 
 #ifdef SUN_CONTRIB
-	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq) * Lsun;
-    gl_FragColor.rgb += Rs;
-//    float dtdtd = dot(N, -worldSunDir);
-//    float eyeCam = dot(V, -worldSunDir);
-//	gl_FragColor.rgb += abs(dtdtd)*max(eyeCam, 0.0)*Lsun*exp(-0.5*vec3(0.34, 0.032, 0.011));
+	reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p);
+	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p) * Lsun;
+	gl_FragColor.rgb = Rs;
 #endif
 
 #ifdef SKY_CONTRIB
-    Rs += fresnel * meanSkyRadiance(V, N, Tx, Ty, sigmaSq);
-    gl_FragColor.rgb += Rs;
+	Rs += fresnel * meanSkyRadiance(V, N, Tx, Ty, sigmaSq);
+	gl_FragColor.rgb = Rs;
 #endif
 
 #ifdef SEA_CONTRIB
-    vec3 Lsea = seaColor * Esky / M_PI;
-    Ru += (1.0 - fresnel) * Lsea;
-    gl_FragColor.rgb += Ru;
+	vec3 Lsea = seaColor * Esky / M_PI;
+	Ru += (1.0 - fresnel) * Lsea;
+	gl_FragColor.rgb += Ru;
 #endif
 
 #if !defined(SEA_CONTRIB) && !defined(SKY_CONTRIB) && !defined(SUN_CONTRIB)
-    Rs = 0.0001 * seaColor * (Lsun * max(dot(N, worldSunDir), 0.0) + Esky) / M_PI;
-    gl_FragColor.rgb += Rs;
+	Rs = 0.0001 * seaColor * (Lsun * max(dot(N, worldSunDir), 0.0) + Esky) / M_PI;
+	gl_FragColor.rgb = Rs;
 #endif
 
-//    vec3 worldDir = vec3((worldCamera.xy - u) / worldCamera.z, 1.0);
-//    vec4 screenDir = worldDirToScreen * vec4(worldDir, 1.0);
-//    vec2 su = screenDir.xy / screenDir.w;
 #ifdef FOAM_CONTRIB
 
 	// compute projected grid vertex
 //	vec4 uclip 	= worldToScreen2 * vec4(u, 0.0, 1.0);
 	vec4 uclip 	= worldToScreen * vec4(P, 1.0);
-//	vec4 uclip 	= worldToScreen2 * vec4(P.xy, 0.0, 1.0);
 	vec3 undc 	= uclip.xyz/uclip.w;
 	vec2 ufg 	= undc.xy * 0.5 + 0.5;
 
@@ -438,8 +403,8 @@ void main() {
 	float l = length(Lsun * max(dot(N, worldSunDir), 0.0) + Esky) / M_PI;
 	float l2 = length(Lsun + Esky) / M_PI;
 
-	vec3 R_ftot = vec3(x_b * wData.r * l * 0.4);//* exp(-(1.0-x_b * wData.r)*2.0*vec3(0.34, 0.032, 0.011));
-	gl_FragColor.rgb += R_ftot*4.0;// + (1.0-wData.r)*Rs + (1.0-R_ftot)*Ru;//* x0;// * x_b;
+	vec3 R_ftot = vec3(x_b * wData.r * l * 0.8);//* exp(-(1.0-x_b * wData.r)*2.0*vec3(0.34, 0.032, 0.011));
+	gl_FragColor.rgb += R_ftot ;// + (1.0-wData.r)*Rs + (1.0-R_ftot)*Ru;//* x0;// * x_b;
 
 
 /// Raytrace the surface and add foam (if any)
@@ -478,15 +443,12 @@ void main() {
 
 #endif
 
-    gl_FragColor.rgb = hdr(gl_FragColor.rgb);
+	gl_FragColor.rgb = hdr(gl_FragColor.rgb);
 
 	// render normals
-    if (normals > 0.0) {
-//        gl_FragColor.rgb = 0.5 + 0.5 * N;
-        gl_FragColor.rgb = abs(N);
-    }
-
-//    gl_FragColor.rgb = vec3(1.0,0.0,0.0);
+	if (normals > 0.0) {
+		gl_FragColor.rgb = abs(N);
+	}
 }
 
 #endif

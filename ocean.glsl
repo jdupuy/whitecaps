@@ -106,6 +106,7 @@ void main() {
         dP.xy += vec2(choppy_factor.w)*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.w, 4.0), dux / GRID_SIZES.w, duy / GRID_SIZES.w).zw;
     }
     P = vec3(u + dP.xy, dP.z);
+//    P = vec3(u, 0);
 
 	// Final position
 	gl_Position = worldToScreen * vec4(P, 1.0);

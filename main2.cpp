@@ -942,6 +942,8 @@ void simulateFFTWaves2(float t)
 		GL_COLOR_ATTACHMENT0_EXT,
 		GL_COLOR_ATTACHMENT1_EXT,
 	};
+
+
 	glDrawBuffers(2, drawBuffers);
 
 	glViewport(0, 0, FFT_SIZE, FFT_SIZE);
@@ -1612,6 +1614,7 @@ int main(int argc, char* argv[]) {
 	TwAddVarRW(tw::bar, "Spectrum Linear", TW_TYPE_BOOL8, &show_spectrum_linear, "group=Rendering");
 	TwAddVarRW(tw::bar, "Normals", TW_TYPE_BOOLCPP, &normals, "group=Rendering");
 	TwAddVarCB(tw::bar, "Sea", TW_TYPE_BOOLCPP, setBool, getBool, &seaContrib, "group=Rendering");
+
 	TwAddVarCB(tw::bar, "Sun", TW_TYPE_BOOLCPP, setBool, getBool, &sunContrib, "group=Rendering");
 	TwAddVarCB(tw::bar, "Sky", TW_TYPE_BOOLCPP, setBool, getBool, &skyContrib, "group=Rendering");
 	TwAddVarCB(tw::bar, "Whitecaps", TW_TYPE_BOOLCPP, setBool, getBool, &foamContrib, "group=Rendering");

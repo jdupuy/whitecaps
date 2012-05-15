@@ -33,7 +33,7 @@
  */
 
 /**
- * Author: Eric Bruneton
+ * Authors: Eric Bruneton & Jonathan Dupuy
  */
 
 #define LAYER_HEIGHT		0.0
@@ -100,12 +100,13 @@ void main() {
     // choppy
     if (choppy > 0.0) {
 
-        dP.xy += vec2(choppy_factor.x)*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.x, 3.0), dux / GRID_SIZES.x, duy / GRID_SIZES.x).xy;
-        dP.xy += vec2(choppy_factor.y)*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.y, 3.0), dux / GRID_SIZES.y, duy / GRID_SIZES.y).zw;
-        dP.xy += vec2(choppy_factor.z)*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.z, 4.0), dux / GRID_SIZES.z, duy / GRID_SIZES.z).xy;
-        dP.xy += vec2(choppy_factor.w)*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.w, 4.0), dux / GRID_SIZES.w, duy / GRID_SIZES.w).zw;
+        dP.xy += choppy_factor.x*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.x, 3.0), dux / GRID_SIZES.x, duy / GRID_SIZES.x).xy;
+        dP.xy += choppy_factor.y*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.y, 3.0), dux / GRID_SIZES.y, duy / GRID_SIZES.y).zw;
+        dP.xy += choppy_factor.z*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.z, 4.0), dux / GRID_SIZES.z, duy / GRID_SIZES.z).xy;
+        dP.xy += choppy_factor.w*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.w, 4.0), dux / GRID_SIZES.w, duy / GRID_SIZES.w).zw;
     }
     P = vec3(u + dP.xy, dP.z);
+//    P = vec3(u, 0);
 
 	// Final position
 	gl_Position = worldToScreen * vec4(P, 1.0);
@@ -219,45 +220,6 @@ vec3 meanSkyRadiance(vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq) {
     return result.rgb;
 }
 
-
-/*
-	Whitecap reflectance
-	R = R_0*exp{-sqrt(a*b)}
-	R_0~1.0
-	a : absorption coefficient
-		a = C_p * a_p + C_y * a_y + a_w
-		*_p : pigment concentration params
-		*_y : yellow substance params
-	b = s*Q\B2
-		s = B\B2*d*sqrt(c)
-			d : bubble diameter size
-			c : liquid fraction
-			B = 4/sqrt(3D) : D ~ 1
-		Q = q(o)*q(o_0) / R_0
-		q(o) = 3(1+2cos(o))/7
-
-	// alpha : absorption (uniform variable)
-	vec3 foamReflectance(in vec3 alpha)
-	{
-		// wavelength(lambda) of each color (red, green, blue) = (650, 510, 475) nm
-		vec3 lambda = vec3(650, 510, 475);
-
-		lambda_0 = 440;	// nm
-
-		// Compute s
-		s = 2.3 * 2.3 * d * sqrt(c);
-		// Compute Q
-		Q = q(a)*q(b)/R0;
-
-		vec3 b = s * Q * Q;
-		// b = 2, 17, or 85 in Kokhanovsky2004 use fix for now
-		// HAVE TO COMPUTE DEPENDING ON WHITECAP AGE
-		return R_0 * exp( -sqrt(alpha * b) );
-	}
-
-
- */
-
 // ----------------------------------------------------------------------------
 
 void main() {
@@ -354,92 +316,18 @@ void main() {
 #ifdef FOAM_CONTRIB
 
 	// compute projected grid vertex
-//	vec4 uclip 	= worldToScreen2 * vec4(u, 0.0, 1.0);
 	vec4 uclip 	= worldToScreen * vec4(P, 1.0);
 	vec3 undc 	= uclip.xyz/uclip.w;
 	vec2 ufg 	= undc.xy * 0.5 + 0.5;
 
 	// get foam data
 	vec4 wData = texture2DLod(foamSampler, ufg, 0.0);
-//	float W_a = wData.y;
-	float W_b = wData.r;//>0.0?wData.r:wData.b;
-//	float Rt_a = 2.0 / (18.0*(1.0-W_a) + 2.0); // f(t) in [0.55,0.05]
+	float W_b = wData.r;
 
-	// base foam texture
-//	float x0 = texture2DLod(noiseSampler2, u * 0.25, 8.0).r;
-//	float x0 = texture2D(noiseSampler2, u.xy * 0.25).r;//*0.5;
-//	x0 += texture2D(noiseSampler2, u.xy * 0.25).r*0.5;
+	vec3 l = (Lsun * (max(dot(N, worldSunDir), 0.0)) + Esky) / M_PI;
 
-	// stage b : upper
-
-//	float t_b = max(wData.b - 0.15,0.0);
-//	float x_b = t_b < 0.015 ? 0.95 : step(pow(t_b-0.015,0.125), x0);
-//	float x_b = t_b < 0.015 ? x0 : x0*step(pow(t_b-0.015,0.0125), x0);
-	float x_b = 1.0;
-//    if(wData.r > 0.0)
-//	{
-    float x0 = texture2D(noiseSampler2, u.xy * 0.25).r;
-//	    float t_b = 1.0 - min(wData.r + 1.15,1.0);
-    float t_b = 1.0 - min(wData.r*2.0,1.0);
-    x_b = x0*step(pow(t_b,0.125), x0);
-    x_b = 1.0;
-//	}
-//	float t_b = (Rt_b - 0.05)*2.0;
-//	float x_b = step(pow(t_b,0.2), x0);
-
-//	// foam surface aspect
-//	// play with thresholds to get different aspects
-//	//           { 0 if x < s0(t)
-//	// f(x,t) := { 1 if x > s1(t)	s0(t) <= s1(t), t in [0,1] is the lifetime of the whitecap
-//	//           { x otherwise
-//	float t = 1.0-W;
-//	float s0 = t > 0.5 ? t*2.0 : 0.0;
-//	float s1 = t <= 0.5 ? t*2.0 : 1.0;
-//	float x = x0*step(s0,x0);
-//	x = max(x, step(s1,x));
-//	float tmp = max(dot(N, vec3(0.0,0.0,1.0)),0.0);
-//	vec3 N_f = (vec4(normalize(texture2D(foamNormalSampler, u * 0.25).rgb*2.0-1.0),0.0)).xyz; // fetch surface normal
-
-	float l = length(Lsun * max(dot(N, worldSunDir), 0.0) + Esky) / M_PI;
-	float l2 = length(Lsun + Esky) / M_PI;
-
-	vec3 R_ftot = vec3(x_b * wData.r * l * 0.8);//* exp(-(1.0-x_b * wData.r)*2.0*vec3(0.34, 0.032, 0.011));
+	vec3 R_ftot = vec3(wData.r * l * 0.4);//* exp(-(1.0-x_b * wData.r)*2.0*vec3(0.34, 0.032, 0.011));
 	gl_FragColor.rgb += R_ftot ;// + (1.0-wData.r)*Rs + (1.0-R_ftot)*Ru;//* x0;// * x_b;
-
-
-/// Raytrace the surface and add foam (if any)
-	// http://www.thepolygoners.com/tutorials/lineplane/lineplane.html
-	// todo : refract the angle (which differs ith wavelength ..)
-//	float n1 = 1.00;	// refraction index of air
-//	float n2 = (W_b + (1.0-W_b)*1.33);	// refraction index of water
-//	vec3 rayOrigin 	= P;
-//	vec3 rayDir 	= normalize(P - worldCamera);
-//
-//	rayDir = refract(rayDir, N, n2);
-//
-//	float r_length = 15.0;
-//
-//	vec3 u2;
-//	vec2 dsp = u - P.xy;	// displacement (hoping it's roughly uniform which it AIN'T)
-//	float max_iter = 17.0;//*max(100.0/dot(worldCamera-P,worldCamera-P), 0.0);
-//	for(float j = 1.0; j < max_iter; j += 1.0)
-//	{
-//		// get new World position and project
-//		u2 = P + (rayDir*r_length) * (j/max_iter);
-//
-//		vec4 u2clip = worldToScreen2 * vec4(u2.xy+dsp, 0.0, 1.0);
-////		vec4 u2clip = worldToScreen2 * vec4(u2, 1.0);
-//		vec2 u2ndc 	= u2clip.xy/u2clip.w;
-//		// get W coverage
-//		vec4 w2_data 	= texture2DLod(foamSampler, u2ndc * vec2(0.5) + vec2(0.5),1.0);
-//		float x02 		= 1.0;//texture2DLod(noiseSampler2, (u2.xy+dsp) * 0.25, j).r;
-////		x02 = x02*step(pow(min(w2_data.a+0.1,1.0),0.25), x02);
-//		float W_b2 = w2_data.r;
-//		float z2 = w2_data.b;	// height of wave
-////		float zw = w2_data.b;// depth of whitecap
-//		float k = distance(P,u2);
-//		gl_FragColor.rgb += (1.0-wData.r)*W_b2/(4.0*3.14)*r_length/max_iter*(1.0 - fresnel)*l2*exp(-k*vec3(0.34, 0.032, 0.011));
-//	}
 
 #endif
 

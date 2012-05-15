@@ -36,8 +36,8 @@ namespace
 // Window Variables
 namespace window
 {
-int width   = 1280;
-int height  = 720;
+int width   = 1024;
+int height  = 700;
 } // namespace window
 
 // GL Variables
@@ -165,7 +165,7 @@ float vel		= 5.0f;
 }
 
 // Various
-unsigned int skyTexSize = 512;
+unsigned int skyTexSize = 256;
 bool cloudLayer = false;
 float octaves = 10.0;
 float lacunarity = 2.2;
@@ -202,7 +202,7 @@ float choppy_factor2 = 2.4f;	// Control Choppiness
 float choppy_factor3 = 2.4f;	// Control Choppiness
 
 // WAVES SPECTRUM
-const int N_SLOPE_VARIANCE = 10; // size of the 3d texture containing precomputed filtered slope variances
+const int N_SLOPE_VARIANCE = 8; // size of the 3d texture containing precomputed filtered slope variances
 float GRID1_SIZE = 5409.0; // size in meters (i.e. in spatial domain) of the first grid
 float GRID2_SIZE = 503.0; // size in meters (i.e. in spatial domain) of the second grid
 float GRID3_SIZE = 31.0; //51 // size in meters (i.e. in spatial domain) of the third grid
@@ -942,6 +942,7 @@ void simulateFFTWaves2(float t)
 		GL_COLOR_ATTACHMENT0_EXT,
 		GL_COLOR_ATTACHMENT1_EXT,
 	};
+
 
 
 	glDrawBuffers(2, drawBuffers);

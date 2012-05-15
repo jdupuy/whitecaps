@@ -78,6 +78,7 @@ float error_function(float x) {
 // given a value, provide mean and average
 float breakingValue(float scale, float mu, float sigma2) {
 	return 0.5*error_function(0.5*sqrt(2.0)*(scale - 1.0 - mu)*inversesqrt(sigma2)) + 0.5;
+//	return step(0.0,0.5*sqrt(2.0)*(scale - 1.0 - mu)*inversesqrt(sigma2));
 }
 
 float foam_primitive(float x) {

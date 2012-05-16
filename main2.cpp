@@ -37,7 +37,7 @@ namespace
 namespace window
 {
 int width   = 1024;
-int height  = 700;
+int height  = 768;
 } // namespace window
 
 // GL Variables
@@ -705,7 +705,6 @@ float getSlopeVariance(float kx, float ky, float *spectrumSample)
 }
 
 // precomputes filtered slope variances in a 3d texture, based on the wave spectrum
-// (weird behaviour when amplitudes grow : water looks like plastic)
 void TW_CALL computeSlopeVarianceTex(void *unused)
 {
     // slope variance due to all waves, by integrating over the full spectrum

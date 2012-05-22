@@ -21,11 +21,10 @@ void main() {
 // h(k,t), complex number
 vec2 getSpectrum(float k, vec2 s0, vec2 s0c) {
 	float w = sqrt(9.81 * k * (1.0 + k * k / (370.0 * 370.0)));
-//	float w = sqrt(9.81 * k);	/// hack
 	float c = cos(w * t);
 	float s = sin(w * t);
-//	s0 *= sqrt(2.0); /// hack : "better" looking waves
-//	s0c *= sqrt(2.0); /// hack : "better" looking waves
+	s0 *= sqrt(2.0); /// hack : "better" looking waves
+	s0c *= sqrt(2.0); /// hack : "better" looking waves
 	return vec2((s0.x + s0c.x) * c - (s0.y + s0c.y) * s, (s0.x - s0c.x) * s + (s0.y - s0c.y) * c);
 }
 

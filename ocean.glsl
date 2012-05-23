@@ -58,14 +58,15 @@ uniform vec4 choppy_factor;
 //uniform float displacer;
 
 uniform sampler2DArray fftWavesSampler;	// ocean surface
+uniform sampler2DArray foamDistribution;
 
 uniform vec4 GRID_SIZES;
 
 uniform sampler3D slopeVarianceSampler;
 
-uniform sampler2D foamSampler;	// Whitecap coverage information
-uniform sampler2D foamNormalSampler;	// bump map for foam
-uniform sampler2D noiseSampler2;
+//uniform sampler2D foamSampler;	// Whitecap coverage information
+//uniform sampler2D foamNormalSampler;	// bump map for foam
+//uniform sampler2D noiseSampler2;
 
 uniform vec3 seaColor; // sea bottom color
 
@@ -123,6 +124,14 @@ void main() {
 // assumes x>0
 float erfc(float x) {
 	return 2.0 * exp(-x * x) / (2.319 * x + sqrt(4.0 + 1.52 * x * x));
+}
+
+// assumes x>0
+float erf(float x) {
+	float a  = 0.140012;
+	float x2 = x*x;
+	float ax2 = a*x2;
+	return sign(x) * sqrt( 1.0 - exp(-x2*(4.0/M_PI + ax2)/(1.0 + ax2)) );
 }
 
 float Lambda(float cosTheta, float sigmaSq) {
@@ -222,6 +231,11 @@ vec3 meanSkyRadiance(vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq) {
 
 // ----------------------------------------------------------------------------
 
+float whitecapCoverage(float mu, float sigma2) {
+	return 0.5*erf((0.5*sqrt(2.0)*(mu)*inversesqrt(sigma2))) + 0.5;
+}
+
+
 void main() {
 
 	vec3 V = normalize(worldCamera - P);
@@ -315,20 +329,21 @@ void main() {
 
 #ifdef FOAM_CONTRIB
 
-	// compute projected grid vertex
-	vec4 uclip 	= worldToScreen * vec4(P, 1.0);
-	vec3 undc 	= uclip.xyz/uclip.w;
-	vec2 ufg 	= undc.xy * 0.5 + 0.5;
+	// extract mean and variance
+	vec2 jm1 = texture2DArray(foamDistribution, vec3(u / GRID_SIZES.x, 2.0)).rg;
+	vec2 jm2 = texture2DArray(foamDistribution, vec3(u / GRID_SIZES.y, 2.0)).ba;
+	vec2 jm3 = texture2DArray(foamDistribution, vec3(u / GRID_SIZES.z, 3.0)).rg;
+	vec2 jm4 = texture2DArray(foamDistribution, vec3(u / GRID_SIZES.w, 3.0)).ba;
+	vec2 jm  = jm1+jm2+jm3+jm4;
+	float jSigma2 = max(jm.y - (jm1.x*jm1.x + jm2.x*jm2.x + jm3.x*jm3.x + jm4.x*jm4.x), 0.0);
 
-	// get foam data
-	vec4 wData = texture2DLod(foamSampler, ufg, 0.0);
-	float W_b = wData.r;
+	// get coverage
+	float W = whitecapCoverage(jm.x,jSigma2);
 
+	// compute and add whitecap radiance
 	vec3 l = (Lsun * (max(dot(N, worldSunDir), 0.0)) + Esky) / M_PI;
-
-	vec3 R_ftot = vec3(wData.r * l * 0.4);//* exp(-(1.0-x_b * wData.r)*2.0*vec3(0.34, 0.032, 0.011));
-	gl_FragColor.rgb += R_ftot ;// + (1.0-wData.r)*Rs + (1.0-R_ftot)*Ru;//* x0;// * x_b;
-
+	vec3 R_ftot = vec3(W * l * 0.4);
+	gl_FragColor.rgb += R_ftot;
 #endif
 
 	gl_FragColor.rgb = hdr(gl_FragColor.rgb);

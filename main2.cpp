@@ -368,9 +368,10 @@ void loadPrograms(bool all)
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "slopeVarianceSampler"), gl::texture::SLOPE_VARIANCE);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "noiseSampler2"), gl::texture::FOAM_SURFACE);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamNormalSampler"), gl::texture::FOAM_NORMALMAP);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamSampler"), gl::texture::FOAM);
+//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "noiseSampler2"), gl::texture::FOAM_SURFACE);
+//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamNormalSampler"), gl::texture::FOAM_NORMALMAP);
+//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamSampler"), gl::texture::FOAM);
+	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamDistribution"), gl::texture::GAUSSZ);
 
 	files[0] = "foam.glsl";
 	if (gl::programs[gl::program::FOAM] != NULL)
@@ -1263,6 +1264,7 @@ void redisplayFunc() {
 	glUseProgram(gl::programs[gl::program::GAUSS]->program);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "fftWavesSampler"), gl::texture::FFT_PING);
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "choppy"), choppy_factor0, choppy_factor1, choppy_factor2, choppy_factor3);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "jacobian_scale"), jacobian_scale);
 
 	drawQuad();
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -1290,32 +1292,32 @@ void redisplayFunc() {
 
 
 	// compute foam
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
-	glViewport(0, 0, window::width, window::height);
+//	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
+//	glViewport(0, 0, window::width, window::height);
 
-	float clear[] = {0.0,0.0,0.0,0.0};
-	glClearBufferfv(GL_COLOR,0,clear);
-	glClear(GL_DEPTH_BUFFER_BIT);
+//	float clear[] = {0.0,0.0,0.0,0.0};
+//	glClearBufferfv(GL_COLOR,0,clear);
+//	glClear(GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(gl::programs[gl::program::FOAM]->program);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "fftWavesSampler"), gl::texture::FFT_PING);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevfftWavesSampler"), gl::texture::FFT_PING_0 + fftPass);
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invProjection"), 1, true, proj.inverse().coefficients());
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invView"), 1, true, view.inverse().coefficients());
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "view"), 1, true, cam2d.coefficients());
-	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "mvp"), 1, true, (proj * view).coefficients());
-	glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldPos"), view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
-	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
-	glUniform2f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gridSize"), gridSize / float(window::width), gridSize / float(window::height));
-	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
-	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "jacobian_scale"), jacobian_scale);
+//	glUseProgram(gl::programs[gl::program::FOAM]->program);
+//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "fftWavesSampler"), gl::texture::FFT_PING);
+////	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevfftWavesSampler"), gl::texture::FFT_PING_0 + fftPass);
+//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invProjection"), 1, true, proj.inverse().coefficients());
+//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invView"), 1, true, view.inverse().coefficients());
+////	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "view"), 1, true, cam2d.coefficients());
+//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "mvp"), 1, true, (proj * view).coefficients());
+//	glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldPos"), view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
+//	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
+//	glUniform2f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gridSize"), gridSize / float(window::width), gridSize / float(window::height));
+//	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
+//	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "jacobian_scale"), jacobian_scale);
 
 
-	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_GRID]);
-	glVertexPointer(4, GL_FLOAT, 16, 0);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
+//	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_GRID]);
+//	glVertexPointer(4, GL_FLOAT, 16, 0);
+//	glEnableClientState(GL_VERTEX_ARRAY);
+//	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
 
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);

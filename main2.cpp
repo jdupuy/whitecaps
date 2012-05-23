@@ -1264,7 +1264,6 @@ void redisplayFunc() {
 	glUseProgram(gl::programs[gl::program::GAUSS]->program);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "fftWavesSampler"), gl::texture::FFT_PING);
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "choppy"), choppy_factor0, choppy_factor1, choppy_factor2, choppy_factor3);
-	glUniform1f(glGetUniformLocation(gl::programs[gl::program::GAUSS]->program, "jacobian_scale"), jacobian_scale);
 
 	drawQuad();
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -1355,6 +1354,7 @@ void redisplayFunc() {
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldCamera"),  view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldSunDir"), sun.x, sun.y, sun.z);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "hdrExposure"), hdrExposure);
+	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "jacobian_scale"), jacobian_scale);
 
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "seaColor"), seaColor[0] * seaColor[3], seaColor[1] * seaColor[3], seaColor[2] * seaColor[3]);
 

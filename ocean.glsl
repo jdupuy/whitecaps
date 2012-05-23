@@ -55,7 +55,7 @@ uniform vec2 gridSize;
 uniform float normals;
 uniform float choppy;
 uniform vec4 choppy_factor;
-//uniform float displacer;
+uniform float jacobian_scale;
 
 uniform sampler2DArray fftWavesSampler;	// ocean surface
 uniform sampler2DArray foamDistribution;
@@ -231,8 +231,8 @@ vec3 meanSkyRadiance(vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq) {
 
 // ----------------------------------------------------------------------------
 
-float whitecapCoverage(float mu, float sigma2) {
-	return 0.5*erf((0.5*sqrt(2.0)*(mu)*inversesqrt(sigma2))) + 0.5;
+float whitecapCoverage(float epsilon, float mu, float sigma2) {
+	return 0.5*erf((0.5*sqrt(2.0)*(epsilon-mu)*inversesqrt(sigma2))) + 0.5;
 }
 
 
@@ -322,14 +322,8 @@ void main() {
 	gl_FragColor.rgb += Ru;
 #endif
 
-#if !defined(SEA_CONTRIB) && !defined(SKY_CONTRIB) && !defined(SUN_CONTRIB)
-	Rs = 0.0001 * seaColor * (Lsun * max(dot(N, worldSunDir), 0.0) + Esky) / M_PI;
-	gl_FragColor.rgb = Rs;
-#endif
-
 #ifdef FOAM_CONTRIB
-
-	// extract mean and variance
+	// extract mean and variance of the jacobian matrix determinant
 	vec2 jm1 = texture2DArray(foamDistribution, vec3(u / GRID_SIZES.x, 2.0)).rg;
 	vec2 jm2 = texture2DArray(foamDistribution, vec3(u / GRID_SIZES.y, 2.0)).ba;
 	vec2 jm3 = texture2DArray(foamDistribution, vec3(u / GRID_SIZES.z, 3.0)).rg;
@@ -338,12 +332,18 @@ void main() {
 	float jSigma2 = max(jm.y - (jm1.x*jm1.x + jm2.x*jm2.x + jm3.x*jm3.x + jm4.x*jm4.x), 0.0);
 
 	// get coverage
-	float W = whitecapCoverage(jm.x,jSigma2);
+	float W = whitecapCoverage(jacobian_scale,jm.x,jSigma2);
 
 	// compute and add whitecap radiance
 	vec3 l = (Lsun * (max(dot(N, worldSunDir), 0.0)) + Esky) / M_PI;
 	vec3 R_ftot = vec3(W * l * 0.4);
 	gl_FragColor.rgb += R_ftot;
+#endif
+
+
+#if !defined(SEA_CONTRIB) && !defined(SKY_CONTRIB) && !defined(SUN_CONTRIB)
+	Rs = 0.0001 * seaColor * (Lsun * max(dot(N, worldSunDir), 0.0) + Esky) / M_PI;
+	gl_FragColor.rgb = Rs;
 #endif
 
 	gl_FragColor.rgb = hdr(gl_FragColor.rgb);

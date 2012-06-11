@@ -166,8 +166,9 @@ float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaS
 
     zL = max(zL, 0.01);
     zV = max(zV, 0.01);
+	p /= ((1.0 + Lambda(zL, sigmaL2) + Lambda(zV, sigmaV2)) * zV * zH2 * zH2 * 4.0);
 
-    return fresnel * p / ((1.0 + Lambda(zL, sigmaL2) + Lambda(zV, sigmaV2)) * zV * zH2 * zH2 * 4.0);
+    return fresnel * p;// / ((1.0 + Lambda(zL, sigmaL2) + Lambda(zV, sigmaV2)) * zV * zH2 * zH2 * 4.0);
 }
 
 // ---------------------------------------------------------------------------
@@ -306,8 +307,8 @@ void main() {
 	gl_FragColor = vec4(0.0);
 
 #ifdef SUN_CONTRIB
-	reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p);
-	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p) * Lsun;
+//	reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p);
+	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p) * Lsun * 0.8;
 	gl_FragColor.rgb = Rs;
 #endif
 

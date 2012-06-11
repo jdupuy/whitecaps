@@ -24,20 +24,17 @@ using namespace std;
 #include <unistd.h>
 #endif
 
-#include "BMPLoader.h"
+#define _BENCH
 
 #define BUFFER_OFFSET(i) 	((char *)NULL + (i))
-
-double bencher = 0.0;
-double frames  = 0.0;
 
 namespace
 {
 // Window Variables
 namespace window
 {
-int width   = 1024;
-int height  = 768;
+int width   = 1280;
+int height  = 720;
 } // namespace window
 
 // GL Variables
@@ -62,9 +59,7 @@ enum
     FFT1,
     SKY,
     VARIANCES,
-    FOAM,
     GAUSS,
-    TILE,
 
     MAX
 };
@@ -85,10 +80,7 @@ enum
     FFT_PING,
     FFT_PONG,
     BUTTERFLY,
-    FOAM_SURFACE,
-    FOAM,
     GAUSSZ,
-    FOAM_NORMALMAP,
 
     MAX
 };
@@ -116,19 +108,10 @@ enum
     CLOUDS,
     SHOW_SPECTRUM,
     INIT,
-    INIT2,
     VARIANCES,
     FFTX,
     FFTY,
-    JACOBIANS,
-    FOAM,
     GAUSS,
-//    PARTICLE_GEN,
-//    PARTICLE_UPDATE,
-//    WHITECAP_COVERAGE,
-//    WHITECAP_PARTICLE,
-//    WHITECAP_UPDATE,
-//    TILE,
 
     MAX
 };
@@ -152,7 +135,7 @@ namespace tw
 // camera
 namespace camera
 {
-float z 	    = 20.0f;
+float z 	    = 1.0f;
 float velx		= 0.0f;
 float vely		= 0.0f;
 float velz		= 0.0f;
@@ -163,6 +146,9 @@ float phi 		= 0.0f;
 float fovy 		= 90.0f;
 float vel		= 5.0f;
 }
+
+// app speed
+GLdouble appSpeed = 0.0f;
 
 // Various
 unsigned int skyTexSize = 256;
@@ -187,7 +173,7 @@ float hdrExposure = 0.4;
 bool grid = false;
 bool animate = true;
 bool seaContrib = true;
-bool sunContrib = false;
+bool sunContrib = true;
 bool skyContrib = true;
 bool foamContrib = true;
 bool manualFilter = false;
@@ -207,7 +193,7 @@ float GRID1_SIZE = 5409.0; // size in meters (i.e. in spatial domain) of the fir
 float GRID2_SIZE = 503.0; // size in meters (i.e. in spatial domain) of the second grid
 float GRID3_SIZE = 31.0; //51 // size in meters (i.e. in spatial domain) of the third grid
 float GRID4_SIZE = 5.0; // size in meters (i.e. in spatial domain) of the fourth grid
-float WIND = 10.0; // wind speed in meters per second (at 10m above surface)
+float WIND = 5.0; // wind speed in meters per second (at 10m above surface)
 float OMEGA = 0.84f; // sea state (inverse wave age)
 bool propagate = true; // wave propagation?
 float A = 1.0; // wave amplitude factor (should be one)
@@ -220,10 +206,13 @@ const int PASSES = 8; // number of passes needed for the FFT 6 -> 64, 7 -> 128, 
 const int FFT_SIZE = 1 << PASSES; // size of the textures storing the waves in frequency and spatial domains
 float *spectrum12 = NULL;
 float *spectrum34 = NULL;
-int fftPass = 0;
 
 // Foam
-float jacobian_scale = -0.1f;//1.20f;
+float jacobian_scale = -0.1f;
+
+#ifdef _BENCH
+std::ofstream gnuplot("perf.dat", std::ofstream::out);
+#endif //_BENCH
 
 } // namespace
 
@@ -368,20 +357,7 @@ void loadPrograms(bool all)
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "slopeVarianceSampler"), gl::texture::SLOPE_VARIANCE);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "noiseSampler2"), gl::texture::FOAM_SURFACE);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamNormalSampler"), gl::texture::FOAM_NORMALMAP);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamSampler"), gl::texture::FOAM);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "foamDistribution"), gl::texture::GAUSSZ);
-
-	files[0] = "foam.glsl";
-	if (gl::programs[gl::program::FOAM] != NULL)
-	{
-		delete gl::programs[gl::program::FOAM];
-		gl::programs[gl::program::FOAM] = NULL;
-	}
-	gl::programs[gl::program::FOAM] = new Program(1, files);
-	glUseProgram(gl::programs[gl::program::FOAM]->program);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gausszSampler"), gl::texture::GAUSSZ);
 
 	if (!all)
 	{
@@ -449,18 +425,6 @@ void loadPrograms(bool all)
 	glUseProgram(gl::programs[gl::program::INIT]->program);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
-
-	files[0] = "init2.glsl";
-	if (gl::programs[gl::program::INIT2] != NULL)
-	{
-		delete gl::programs[gl::program::INIT2];
-		gl::programs[gl::program::INIT2] = NULL;
-	}
-	gl::programs[gl::program::INIT2] = new Program(1, files);
-	glUseProgram(gl::programs[gl::program::INIT2]->program);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "spectrum_1_2_Sampler"), gl::texture::SPECTRUM12);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "spectrum_3_4_Sampler"), gl::texture::SPECTRUM34);
-
 
 	files[0] = "variances.glsl";
 	if (gl::programs[gl::program::VARIANCES] != NULL)
@@ -925,87 +889,6 @@ void simulateFFTWaves(float t)
 //	fftPass = 1 - fftPass;
 }
 
-void simulateFFTWaves2(float t)
-{
-	// init
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT0]);
-	for (int i = 0; i < 1; ++i)
-	{
-		glFramebufferTextureLayerEXT(GL_FRAMEBUFFER_EXT,
-		                             GL_COLOR_ATTACHMENT0_EXT + i,
-		                             gl::textures[gl::texture::FFT_PING],
-		                             0,
-		                             8+i);
-	}
-	GLenum drawBuffers[2] =
-	{
-		GL_COLOR_ATTACHMENT0_EXT,
-		GL_COLOR_ATTACHMENT1_EXT,
-	};
-
-
-
-	glDrawBuffers(2, drawBuffers);
-
-	glViewport(0, 0, FFT_SIZE, FFT_SIZE);
-
-	glUseProgram(gl::programs[gl::program::INIT2]->program);
-	glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "FFT_SIZE"),FFT_SIZE);
-	glUniform4f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "INVERSE_GRID_SIZES"),
-		        2.0 * M_PI * FFT_SIZE / GRID1_SIZE,
-		        2.0 * M_PI * FFT_SIZE / GRID2_SIZE,
-		        2.0 * M_PI * FFT_SIZE / GRID3_SIZE,
-		        2.0 * M_PI * FFT_SIZE / GRID4_SIZE);
-	glUniform1f(glGetUniformLocation(gl::programs[gl::program::INIT2]->program, "t"), t);
-	drawQuad();
-
-	// fft passes
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
-//    glClearColor(0.0,0.0,0.0,0.0);
-//    glClear(GL_COLOR_BUFFER_BIT);
-
-	glUseProgram(gl::programs[gl::program::FFTX]->program);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "sLayer"), 8);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "nLayers"), 1);
-	for (int i = 0; i < PASSES; ++i)
-	{
-		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "pass"), float(i + 0.5) / PASSES);
-		if (i%2 == 0)
-		{
-		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PING);
-		    glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-		}
-		else
-		{
-		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTX]->program, "imgSampler"), gl::texture::FFT_PONG);
-		    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-		}
-		drawQuad();
-	}
-	glUseProgram(gl::programs[gl::program::FFTY]->program);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "sLayer"), 8);
-	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "nLayers"), 1);
-	for (int i = PASSES; i < 2 * PASSES; ++i)
-	{
-		glUniform1f(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "pass"), float(i - PASSES + 0.5) / PASSES);
-		if (i%2 == 0)
-		{
-		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PING);
-		    glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-		}
-		else
-		{
-		    glUniform1i(glGetUniformLocation(gl::programs[gl::program::FFTY]->program, "imgSampler"), gl::texture::FFT_PONG);
-		    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-		}
-		drawQuad();
-	}
-
-glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-	fftPass = 1 - fftPass;
-}
-
 void TW_CALL getFloat(void *value, void *clientData)
 {
 	*((float*) value) = *((float*) clientData);
@@ -1195,14 +1078,16 @@ double time()
 
 
 void redisplayFunc() {
-	static double t0 = 0.0;
+	static double t0 = time();
 	static double t1 = time();
+
+#ifdef _BENCH
+	glFinish();
+	camera::theta = 90.0f;
+#endif
 
 	t0          = time();
 	float delta = t0 - t1;
-
-	bencher += delta;
-	++frames;
 
 	camera::x += camera::vel * delta * camera::velx * max(camera::z*0.5f,1.0f);
 	camera::y += camera::vel * delta * camera::vely * max(camera::z*0.5f,1.0f);
@@ -1254,11 +1139,10 @@ void redisplayFunc() {
 
 	// solve fft
     simulateFFTWaves(t);
-//    simulateFFTWaves2(t);
     glActiveTexture(GL_TEXTURE0 + gl::texture::FFT_PING);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
-	/// filtering
+	// filtering
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::GAUSS]);
 	glViewport(0, 0, FFT_SIZE, FFT_SIZE);
 	glUseProgram(gl::programs[gl::program::GAUSS]->program);
@@ -1289,36 +1173,6 @@ void redisplayFunc() {
 	view = mat4f::rotatey(camera::phi) * view;
 	view = mat4f::rotatex(camera::theta) * view;
 
-
-	// compute foam
-//	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
-//	glViewport(0, 0, window::width, window::height);
-
-//	float clear[] = {0.0,0.0,0.0,0.0};
-//	glClearBufferfv(GL_COLOR,0,clear);
-//	glClear(GL_DEPTH_BUFFER_BIT);
-
-//	glUseProgram(gl::programs[gl::program::FOAM]->program);
-//	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "fftWavesSampler"), gl::texture::FFT_PING);
-////	glUniform1i(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "prevfftWavesSampler"), gl::texture::FFT_PING_0 + fftPass);
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invProjection"), 1, true, proj.inverse().coefficients());
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "invView"), 1, true, view.inverse().coefficients());
-////	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "view"), 1, true, cam2d.coefficients());
-//	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "mvp"), 1, true, (proj * view).coefficients());
-//	glUniform3f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "camWorldPos"), view.inverse()[0][3], view.inverse()[1][3], view.inverse()[2][3]);
-//	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
-//	glUniform2f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "gridSize"), gridSize / float(window::width), gridSize / float(window::height));
-//	glUniform4f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "choppy_factor"), choppy_factor0,choppy_factor1,choppy_factor2,choppy_factor3);
-//	glUniform1f(glGetUniformLocation(gl::programs[gl::program::FOAM]->program, "jacobian_scale"), jacobian_scale);
-
-
-//	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_GRID]);
-//	glVertexPointer(4, GL_FLOAT, 16, 0);
-//	glEnableClientState(GL_VERTEX_ARRAY);
-//	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
-
-
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glDrawBuffer(GL_BACK);
 	glViewport(0, 0, window::width, window::height);
@@ -1342,8 +1196,11 @@ void redisplayFunc() {
 		return;
 	}
 
-/// Final Rendering
+	// Final Rendering
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
 	glUseProgram(gl::programs[gl::program::RENDER]->program);
 	glUniform1i(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "fftWavesSampler"), gl::texture::FFT_PING);
 	glUniformMatrix4fv(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "screenToCamera"), 1, true, proj.inverse().coefficients());
@@ -1355,11 +1212,8 @@ void redisplayFunc() {
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "worldSunDir"), sun.x, sun.y, sun.z);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "hdrExposure"), hdrExposure);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "jacobian_scale"), jacobian_scale);
-
 	glUniform3f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "seaColor"), seaColor[0] * seaColor[3], seaColor[1] * seaColor[3], seaColor[2] * seaColor[3]);
-
 	glUniform4f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "GRID_SIZES"), GRID1_SIZE, GRID2_SIZE, GRID3_SIZE, GRID4_SIZE);
-
 	glUniform2f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "gridSize"), gridSize/float(window::width), gridSize/float(window::height));
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "spectrum"), show_spectrum);
 	glUniform1f(glGetUniformLocation(gl::programs[gl::program::RENDER]->program, "normals"), normals);
@@ -1377,22 +1231,13 @@ void redisplayFunc() {
 		glPolygonMode(GL_BACK, GL_FILL);
 	}
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
 	glBindBuffer(GL_ARRAY_BUFFER, gl::buffers[gl::buffer::VERTEX_GRID]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl::buffers[gl::buffer::INDEX_GRID]);
 	glVertexPointer(4, GL_FLOAT, 16, 0);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
-	//    glDisable(GL_DEPTH_TEST);
-	//    glPointSize(3.0f);
-	//    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-	//    glDrawElements(GL_TRIANGLES, vboSize, GL_UNSIGNED_INT, 0);
 
-	glPolygonMode(GL_FRONT, GL_FILL);
-	glPolygonMode(GL_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_CULL_FACE);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
@@ -1401,7 +1246,6 @@ void redisplayFunc() {
 	{
 		drawClouds(sun, proj * view);
 	}
-
 
 	/// render atmosphere (after scene -> use early Z !!)
 	glUseProgram(gl::programs[gl::program::SKY]->program);
@@ -1417,21 +1261,32 @@ void redisplayFunc() {
 	glVertex2f(1, 1);
 	glEnd();
 
-	if (cloudLayer && camera::z < 3000.0)
+	if (cloudLayer)
 		drawClouds(sun, proj * view);
 
-
 	glUseProgram(0);
+#ifdef _BENCH
+	glFinish();
+#endif
+	appSpeed = (time() - t0)*1000.0;
+#ifdef _BENCH
+	float footprint = sqr(tan(camera::fovy*0.5f)*camera::z/1e3)
+	                * float(window::width)/float(window::height);
+	gnuplot<< footprint << ' ' << appSpeed << std::endl;
+	++camera::z;
+	if(camera::z > 5000.0) {
+		gnuplot.close();
+		exit(0);
+	}
+#endif //_BENCH
 
 	TwDraw();
+
 	glutSwapBuffers();
 
 	t1 = t0;
 }
 
-void perf() {
-	cout << "avg time : " << bencher*1000.0 / frames << " ms" << endl;
-}
 
 void reshapeFunc(int x, int y) {
 	window::width = x;
@@ -1587,6 +1442,8 @@ int main(int argc, char* argv[]) {
 	tw::bar = TwNewBar("Parameters");
 	TwDefine(" Parameters size='220 600' ");
 
+	TwAddVarRO(tw::bar, "Speed (ms)", TW_TYPE_DOUBLE, &appSpeed, "");
+
 	TwAddVarCB(tw::bar, "L1", TW_TYPE_FLOAT, setFloat, getFloat, &GRID1_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
 	TwAddVarCB(tw::bar, "L2", TW_TYPE_FLOAT, setFloat, getFloat, &GRID2_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
 	TwAddVarCB(tw::bar, "L3", TW_TYPE_FLOAT, setFloat, getFloat, &GRID3_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
@@ -1602,7 +1459,7 @@ int main(int argc, char* argv[]) {
 	TwAddVarRW(tw::bar, "ChoppyFactor4", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Spectrum");
 	TwAddButton(tw::bar, "Generate", computeSlopeVarianceTex, NULL, "group=Spectrum");
 
-//	TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
+	TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
 //	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
 //	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
 	TwAddVarRW(tw::bar, "Grid size", TW_TYPE_FLOAT, &gridSize, "min=1.0 max=16.0 step=1.0 group=Rendering");
@@ -1722,23 +1579,6 @@ int main(int argc, char* argv[]) {
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
     delete[] img;
 
-	img = new unsigned char[256 * 256 + 38];
-    f = fopen("data/noise/noise_iA_C256.pgm", "rb");
-	fread(img, 1, 256 * 256 + 38, f);
-	fclose(f);
-	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_SURFACE);
-	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_SURFACE]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, img + 38);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
-
-	delete[] img;
-
-
 	glActiveTexture(GL_TEXTURE0 + gl::texture::SPECTRUM12);
 	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::SPECTRUM12]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1794,16 +1634,6 @@ int main(int argc, char* argv[]) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, FFT_SIZE, PASSES, 0, GL_RGBA, GL_FLOAT, data);
 	delete[] data;
 
-	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM);
-	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, window::width, window::height, 0, GL_RED, GL_FLOAT, NULL);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
-
 	glActiveTexture(GL_TEXTURE0 + gl::texture::GAUSSZ);
 	glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, gl::textures[gl::texture::GAUSSZ]);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -1813,19 +1643,6 @@ int main(int argc, char* argv[]) {
 		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 8, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
-
-	BMPClass bmp;
-	if(BMPLoad("data/noise/noise_iA_C256_2normals.bmp", bmp)!=BMPNOERROR)
-		std::cout << "normal map loading failed\n";
-
-	glActiveTexture(GL_TEXTURE0 + gl::texture::FOAM_NORMALMAP);
-	glBindTexture(GL_TEXTURE_2D, gl::textures[gl::texture::FOAM_NORMALMAP]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.bytes);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
 	generateWavesSpectrum();
 
@@ -1853,15 +1670,6 @@ int main(int argc, char* argv[]) {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FFT1]);
 		glFramebufferTextureEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, gl::textures[gl::texture::FFT_PING], 0);
 		glFramebufferTextureEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, gl::textures[gl::texture::FFT_PONG], 0);
-
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::FOAM]);
-		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, gl::rbuffers[gl::rbuffer::DEPTH_FBO_JACOBIANS]);
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, gl::textures[gl::texture::FOAM], 0);
-		GLenum drawBuffers_foam[1] = {
-			GL_COLOR_ATTACHMENT0_EXT
-		};
-
-		glDrawBuffers(1, drawBuffers_foam);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, gl::fbuffers[gl::fbuffer::GAUSS]);
 		glDrawBuffers(8, drawBuffers);
@@ -1930,7 +1738,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	atexit(onClean);
-	atexit(perf);
+
+#ifdef _BENCH
+gnuplot << "# A B\n";
+#endif// _BENCH
 
 	glutMainLoop();
 

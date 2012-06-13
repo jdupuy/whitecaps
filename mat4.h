@@ -350,7 +350,7 @@ inline mat4<type> mat4<type>::rotatez(type angle)
                       0, 0, 1, 0,
                       0, 0, 0, 1);
 }
-#include <iostream>
+
 template <typename type>
 inline mat4<type> mat4<type>::perspectiveProjection(type fovy, type aspect, type zNear, type zFar)
 {

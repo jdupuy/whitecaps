@@ -23,8 +23,8 @@ vec2 getSpectrum(float k, vec2 s0, vec2 s0c) {
 	float w = sqrt(9.81 * k * (1.0 + k * k / (370.0 * 370.0)));
 	float c = cos(w * t);
 	float s = sin(w * t);
-	s0 *= sqrt(2.0); /// hack : "better" looking waves
-	s0c *= sqrt(2.0); /// hack : "better" looking waves
+//	s0 *= sqrt(2.0); // hack
+//	s0c *= sqrt(2.0); // hack
 	return vec2((s0.x + s0c.x) * c - (s0.y + s0c.y) * s, (s0.x - s0c.x) * s + (s0.y - s0c.y) * c);
 }
 
@@ -64,10 +64,10 @@ void main() {
 	float IK4 = K4 == 0.0 ? 0.0 : 1.0 / K4;
 
 	// h(k,t)
-	vec2 h1 = getSpectrum(K1, s12.xy, s12c.xy);
-	vec2 h2 = getSpectrum(K2, s12.zw, s12c.zw);
-	vec2 h3 = getSpectrum(K3, s34.xy, s34c.xy);
-	vec2 h4 = getSpectrum(K4, s34.zw, s34c.zw);
+	vec2 h1 = getSpectrum(K1, s12.xy, s12c.xy)*0.0;
+	vec2 h2 = getSpectrum(K2, s12.zw, s12c.zw)*0.0;
+	vec2 h3 = getSpectrum(K3, s34.xy, s34c.xy)*0.0;
+	vec2 h4 = getSpectrum(K4, s34.zw, s34c.zw)*1.0;
 
 
 	// h(K,t) for 4 Grids (with different Lx Lz)

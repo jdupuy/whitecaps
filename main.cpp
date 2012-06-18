@@ -24,7 +24,7 @@ using namespace std;
 #include <unistd.h>
 #endif
 
-#define _BENCH
+//#define _BENCH
 
 #define BUFFER_OFFSET(i) 	((char *)NULL + (i))
 
@@ -135,7 +135,7 @@ namespace tw
 // camera
 namespace camera
 {
-float z 	    = 1.0f;
+float z 	    = 0.2f;
 float velx		= 0.0f;
 float vely		= 0.0f;
 float velz		= 0.0f;
@@ -1092,8 +1092,8 @@ void redisplayFunc() {
 	camera::x += camera::vel * delta * camera::velx * max(camera::z*0.5f,1.0f);
 	camera::y += camera::vel * delta * camera::vely * max(camera::z*0.5f,1.0f);
 	camera::z += camera::vel * delta * camera::velz * max(camera::z*0.5f,1.0f);
-	if(camera::z  < 1.0)
-		camera::z = 1.0;
+	if(camera::z  < 0.2f)
+		camera::z = 0.2f;
 
 	if (vboParams.x != window::width || vboParams.y != window::height || vboParams.z != gridSize || vboParams.w != camera::theta)
 	{
@@ -1272,7 +1272,7 @@ void redisplayFunc() {
 #ifdef _BENCH
 	float footprint = sqr(tan(camera::fovy*0.5f)*camera::z/1e3)
 	                * float(window::width)/float(window::height);
-	gnuplot<< footprint << ' ' << appSpeed << std::endl;
+	gnuplot<< footprint << ' ' << appSpeed << ' ' << camera::z/1e3 << std::endl;
 	++camera::z;
 	if(camera::z > 5000.0) {
 		gnuplot.close();
@@ -1740,7 +1740,7 @@ int main(int argc, char* argv[]) {
 	atexit(onClean);
 
 #ifdef _BENCH
-gnuplot << "# A B\n";
+gnuplot << "# A B C\n";
 #endif// _BENCH
 
 	glutMainLoop();

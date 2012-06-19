@@ -64,9 +64,9 @@ void main() {
 	float IK4 = K4 == 0.0 ? 0.0 : 1.0 / K4;
 
 	// h(k,t)
-	vec2 h1 = getSpectrum(K1, s12.xy, s12c.xy)*0.0;
-	vec2 h2 = getSpectrum(K2, s12.zw, s12c.zw)*0.0;
-	vec2 h3 = getSpectrum(K3, s34.xy, s34c.xy)*0.0;
+	vec2 h1 = getSpectrum(K1, s12.xy, s12c.xy)*1.0;
+	vec2 h2 = getSpectrum(K2, s12.zw, s12c.zw)*1.0;
+	vec2 h3 = getSpectrum(K3, s34.xy, s34c.xy)*1.0;
 	vec2 h4 = getSpectrum(K4, s34.zw, s34c.zw)*1.0;
 
 

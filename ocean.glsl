@@ -308,7 +308,7 @@ void main() {
 
 #ifdef SUN_CONTRIB
 //	reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p);
-	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p) * Lsun * 0.8;
+	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p) * Lsun;
 	gl_FragColor.rgb = Rs;
 #endif
 
@@ -334,6 +334,8 @@ void main() {
 
 	// get coverage
 	float W = whitecapCoverage(jacobian_scale,jm.x,jSigma2);
+//	if(isnan(W))
+//		W = 0.0;
 
 	// compute and add whitecap radiance
 	vec3 l = (Lsun * (max(dot(N, worldSunDir), 0.0)) + Esky) / M_PI;
@@ -342,7 +344,7 @@ void main() {
 #endif
 
 
-#if !defined(SEA_CONTRIB) && !defined(SKY_CONTRIB) && !defined(SUN_CONTRIB)
+#if !defined(SEA_CONTRIB) && !defined(SKY_CONTRIB) && !defined(SUN_CONTRIB) && !defined(FOAM_CONTRIB)
 	Rs = 0.0001 * seaColor * (Lsun * max(dot(N, worldSunDir), 0.0) + Esky) / M_PI;
 	gl_FragColor.rgb = Rs;
 #endif

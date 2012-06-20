@@ -23,8 +23,6 @@ vec2 getSpectrum(float k, vec2 s0, vec2 s0c) {
 	float w = sqrt(9.81 * k * (1.0 + k * k / (370.0 * 370.0)));
 	float c = cos(w * t);
 	float s = sin(w * t);
-//	s0 *= sqrt(2.0); // hack
-//	s0c *= sqrt(2.0); // hack
 	return vec2((s0.x + s0c.x) * c - (s0.y + s0c.y) * s, (s0.x - s0c.x) * s + (s0.y - s0c.y) * c);
 }
 
@@ -39,11 +37,11 @@ void main() {
 	float y = uv.y > 0.5 ? st.y - 1.0 : st.y;
 
 	// h0(k)
-	vec4 s12 = texture2DLod(spectrum_1_2_Sampler, uv, 0.0);
-	vec4 s34 = texture2DLod(spectrum_3_4_Sampler, uv, 0.0);
+	vec4 s12 = texture2DLod(spectrum_1_2_Sampler, uv, 0.0)*1.414213562;
+	vec4 s34 = texture2DLod(spectrum_3_4_Sampler, uv, 0.0)*1.414213562;
 	// conjugate (h0(k))
-	vec4 s12c = texture2DLod(spectrum_1_2_Sampler, vec2(1.0 + 0.5 / FFT_SIZE) - st, 0.0);
-	vec4 s34c = texture2DLod(spectrum_3_4_Sampler, vec2(1.0 + 0.5 / FFT_SIZE) - st, 0.0);
+	vec4 s12c = texture2DLod(spectrum_1_2_Sampler, vec2(1.0 + 0.5 / FFT_SIZE) - st, 0.0)*1.414213562;
+	vec4 s34c = texture2DLod(spectrum_3_4_Sampler, vec2(1.0 + 0.5 / FFT_SIZE) - st, 0.0)*1.414213562;
 
 	// k
 	vec2 k1 = vec2(x, y) * INVERSE_GRID_SIZES.x;
@@ -64,10 +62,10 @@ void main() {
 	float IK4 = K4 == 0.0 ? 0.0 : 1.0 / K4;
 
 	// h(k,t)
-	vec2 h1 = getSpectrum(K1, s12.xy, s12c.xy)*1.0;
-	vec2 h2 = getSpectrum(K2, s12.zw, s12c.zw)*1.0;
-	vec2 h3 = getSpectrum(K3, s34.xy, s34c.xy)*1.0;
-	vec2 h4 = getSpectrum(K4, s34.zw, s34c.zw)*1.0;
+	vec2 h1 = getSpectrum(K1, s12.xy, s12c.xy);
+	vec2 h2 = getSpectrum(K2, s12.zw, s12c.zw);
+	vec2 h3 = getSpectrum(K3, s34.xy, s34c.xy);
+	vec2 h4 = getSpectrum(K4, s34.zw, s34c.zw);
 
 
 	// h(K,t) for 4 Grids (with different Lx Lz)

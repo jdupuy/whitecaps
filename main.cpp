@@ -33,8 +33,8 @@ namespace
 // Window Variables
 namespace window
 {
-int width   = 1280;
-int height  = 720;
+int width   = 1024;
+int height  = 768;
 } // namespace window
 
 // GL Variables
@@ -258,7 +258,7 @@ float spectrum(float kx, float ky, bool omnispectrum = false)
     float Fm = exp(-0.25 * sqr(k / km - 1.0)); // Eq 41
     float Bh = 0.5 * alpham * cm / c * Fm; // Eq 40
 
-    Bh *= Lpm; // bug fix???
+    Bh *= Lpm; 
 
     if (omnispectrum)
     {
@@ -322,10 +322,10 @@ void drawClouds(const vec4f &sun, const mat4f &mat)
     glUniform1f(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "clamp2"), clamp2);
     glUniform4f(glGetUniformLocation(gl::programs[gl::program::CLOUDS]->program, "cloudsColor"), cloudColor[0], cloudColor[1], cloudColor[2], cloudColor[3]);
     glBegin(GL_TRIANGLE_STRIP);
-    glVertex3f(-1e6, -1e6, 3000.0);
-    glVertex3f(1e6, -1e6, 3000.0);
-    glVertex3f(-1e6, 1e6, 3000.0);
-    glVertex3f(1e6, 1e6, 3000.0);
+    glVertex3f(-1e6, -1e6, 500.0);
+    glVertex3f(1e6, -1e6, 500.0);
+    glVertex3f(-1e6, 1e6, 500.0);
+    glVertex3f(1e6, 1e6, 500.0);
     glEnd();
     glDisable(GL_BLEND);
 }
@@ -506,8 +506,8 @@ void generateMesh()
     float horizon = tan(camera::theta / 180.0 * M_PI);
     float s = min(1.1f, 0.5f + horizon * 0.5f);
 
-    float vmargin = 0.1;
-    float hmargin = 0.1;
+    float vmargin = 2.1;
+    float hmargin = 1.1;
 
 //    vboParams = vec4f(window::width, window::height, gridSize, camera::theta);
     vec4f *data = new vec4f[int(ceil(window::height * (s + vmargin) / gridSize) + 5) * int(ceil(window::width * (1.0 + 2.0 * hmargin) / gridSize) + 5)];
@@ -522,12 +522,9 @@ void generateMesh()
         for (float i = -window::width * hmargin; i < window::width * (1.0 + hmargin) + gridSize; i += gridSize)
         {
             data[n++] = vec4f(-1.0 + 2.0 * i / window::width, -1.0 + 2.0 * j / window::height, 0.0, 1.0);
-            //data[n++] = vec4f(-1.0 + 2.0 * (i + (frandom(&seed)-0.5)*gridSize*0.25) / width, -1.0 + 2.0 * (j + (frandom(&seed)-0.5)*gridSize*0.25) / height, 0.0, 1.0);
             nx++;
-//            std::cout << data[n-1].x << " " << data[n-1].y << std::endl;
         }
     }
-//    std::cout << "generating\n" << std::endl;
 	vboVertices = n;
     glBufferData(GL_ARRAY_BUFFER, n * 16, data, GL_STATIC_DRAW);
     delete[] data;
@@ -555,7 +552,6 @@ void generateMesh()
         }
         nj++;
     }
-	// Should prefer uint16 to uint32
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, vboSize * 4, indices, GL_STATIC_DRAW);
     delete[] indices;
 
@@ -885,8 +881,6 @@ void simulateFFTWaves(float t)
 	}
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-//	fftPass = 1 - fftPass;
 }
 
 void TW_CALL getFloat(void *value, void *clientData)
@@ -1460,8 +1454,8 @@ int main(int argc, char* argv[]) {
 	TwAddButton(tw::bar, "Generate", computeSlopeVarianceTex, NULL, "group=Spectrum");
 
 	TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
-//	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
-//	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
+	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
+	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
 	TwAddVarRW(tw::bar, "Grid size", TW_TYPE_FLOAT, &gridSize, "min=1.0 max=16.0 step=1.0 group=Rendering");
 	TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Rendering");
 	TwAddVarRW(tw::bar, "Exposure", TW_TYPE_FLOAT, &hdrExposure, "min=0.01 max=4.0 step=0.01 group=Rendering");

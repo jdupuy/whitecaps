@@ -126,7 +126,6 @@ float erfc(float x) {
 	return 2.0 * exp(-x * x) / (2.319 * x + sqrt(4.0 + 1.52 * x * x));
 }
 
-// assumes x>0
 float erf(float x) {
 	float a  = 0.140012;
 	float x2 = x*x;

@@ -506,8 +506,8 @@ void generateMesh()
     float horizon = tan(camera::theta / 180.0 * M_PI);
     float s = min(1.1f, 0.5f + horizon * 0.5f);
 
-    float vmargin = 2.1;
-    float hmargin = 1.1;
+    float vmargin = 5.1;
+    float hmargin = 5.1;
 
 //    vboParams = vec4f(window::width, window::height, gridSize, camera::theta);
     vec4f *data = new vec4f[int(ceil(window::height * (s + vmargin) / gridSize) + 5) * int(ceil(window::width * (1.0 + 2.0 * hmargin) / gridSize) + 5)];

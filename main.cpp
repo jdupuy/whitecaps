@@ -233,7 +233,7 @@ float choppy_factor2 = 2.4f;	// Control Choppiness
 float choppy_factor3 = 2.4f;	// Control Choppiness
 
 // WAVES SPECTRUM
-const int N_SLOPE_VARIANCE = 10; // size of the 3d texture containing precomputed filtered slope variances
+const int N_SLOPE_VARIANCE = 4; // size of the 3d texture containing precomputed filtered slope variances
 float GRID1_SIZE = 5409.0; // size in meters (i.e. in spatial domain) of the first grid
 float GRID2_SIZE = 503.0; // size in meters (i.e. in spatial domain) of the second grid
 float GRID3_SIZE = 31.0; //51 // size in meters (i.e. in spatial domain) of the third grid

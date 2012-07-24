@@ -183,7 +183,7 @@ namespace camera
 float z 	    = 0.2f;
 float velx		= 0.0f;
 float vely		= 0.0f;
-float velz		= 0.0f;
+float velz		= 0.00f;
 float x			= 0.0f;
 float y			= 0.0f;
 float theta 	= 0.0f;
@@ -233,7 +233,7 @@ float choppy_factor2 = 2.4f;	// Control Choppiness
 float choppy_factor3 = 2.4f;	// Control Choppiness
 
 // WAVES SPECTRUM
-const int N_SLOPE_VARIANCE = 8; // size of the 3d texture containing precomputed filtered slope variances
+const int N_SLOPE_VARIANCE = 10; // size of the 3d texture containing precomputed filtered slope variances
 float GRID1_SIZE = 5409.0; // size in meters (i.e. in spatial domain) of the first grid
 float GRID2_SIZE = 503.0; // size in meters (i.e. in spatial domain) of the second grid
 float GRID3_SIZE = 31.0; //51 // size in meters (i.e. in spatial domain) of the third grid
@@ -551,8 +551,8 @@ void generateMesh()
     float horizon = tan(camera::theta / 180.0 * M_PI);
     float s = min(1.1f, 0.5f + horizon * 0.5f);
 
-    float vmargin = 0.1;
-    float hmargin = 0.1;
+    float vmargin = 0.3;
+    float hmargin = 0.3;
 
 //    vboParams = vec4f(window::width, window::height, gridSize, camera::theta);
     vec4f *data = new vec4f[int(ceil(window::height * (s + vmargin) / gridSize) + 5) * int(ceil(window::width * (1.0 + 2.0 * hmargin) / gridSize) + 5)];
@@ -1520,7 +1520,7 @@ int main(int argc, char* argv[]) {
 	TwAddVarCB(tw::bar, "Whitecaps", TW_TYPE_BOOLCPP, setBool, getBool, &foamContrib, "group=Rendering");
 	TwAddVarCB(tw::bar, "Manual filter", TW_TYPE_BOOLCPP, setBool, getBool, &manualFilter, "group=Rendering");
 
-	TwAddVarRW(tw::bar, "JScale", TW_TYPE_FLOAT, &jacobian_scale, "min=-50.0 max=50.0 step=0.001 group=Whitecap");
+	TwAddVarRW(tw::bar, "JScale", TW_TYPE_FLOAT, &jacobian_scale, "min=-50.0 max=50.0 step=0.25 group=Whitecap");
 
 	TwAddVarRW(tw::bar, "Octaves", TW_TYPE_FLOAT, &octaves, "min=1.0 max=16.0 step=1.0 group=Clouds");
 	TwAddVarRW(tw::bar, "Lacunarity", TW_TYPE_FLOAT, &lacunarity, "min=0.1 max=3.0 step=0.1 group=Clouds");

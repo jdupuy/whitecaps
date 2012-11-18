@@ -1097,8 +1097,8 @@ void redisplayFunc() {
 		t += delta*speed;
 
 	// solve fft
-    simulateFFTWaves(t);
-    glActiveTexture(GL_TEXTURE0 + TEXTURE_FFT_PING);
+	simulateFFTWaves(t);
+	glActiveTexture(GL_TEXTURE0 + TEXTURE_FFT_PING);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 
 	// filtering

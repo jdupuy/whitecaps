@@ -45,7 +45,7 @@ solution "OpenGL"
 			"-Wl,-rpath,./lib/linux/lin64 -L./lib/linux/lin64 -lGLEW -lglut -lAntTweakBar"
 			}
 			libdirs {
-			"lib/linux/lin64"
+			"./lib/linux/lin64"
 			}
 
 -- Visual x86

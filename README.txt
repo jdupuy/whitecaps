@@ -21,13 +21,13 @@ Building the sources
 
 Commands
 --------
-F1_F9   Load scene
- 1_9    Save scene
-  a     Camera up
-  e     Camera down
- zqsd   Scroll camera
- left   Turn camera left
- right  Turn camera right
+ F1_F9     Load scene
+  1_9      Save scene
+   a       Camera up
+   e       Camera down
+  zqsd     Scroll camera
+  left     Turn camera left
+  right    Turn camera right
 
 
 Enjoy !

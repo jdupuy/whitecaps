@@ -64,10 +64,6 @@ uniform vec4 GRID_SIZES;
 
 uniform sampler3D slopeVarianceSampler;
 
-//uniform sampler2D foamSampler;	// Whitecap coverage information
-//uniform sampler2D foamNormalSampler;	// bump map for foam
-//uniform sampler2D noiseSampler2;
-
 uniform vec3 seaColor; // sea bottom color
 
 varying vec2 u; 	// horizontal coordinates in world space used to compute P(u)
@@ -83,8 +79,6 @@ vec2 oceanPos(vec4 vertex) {
 }
 
 void main() {
-//    gl_Position = gl_Vertex;
-//	foam = 0.0;
     u = oceanPos(gl_Vertex);
     vec2 ux = oceanPos(gl_Vertex + vec4(gridSize.x, 0.0, 0.0, 0.0));
     vec2 uy = oceanPos(gl_Vertex + vec4(0.0, gridSize.y, 0.0, 0.0));
@@ -107,7 +101,6 @@ void main() {
         dP.xy += choppy_factor.w*texture2DArrayGrad(fftWavesSampler, vec3(u / GRID_SIZES.w, 4.0), dux / GRID_SIZES.w, duy / GRID_SIZES.w).zw;
     }
     P = vec3(u + dP.xy, dP.z);
-//    P = vec3(u, 0);
 
 	// Final position
 	gl_Position = worldToScreen * vec4(P, 1.0);
@@ -140,7 +133,7 @@ float Lambda(float cosTheta, float sigmaSq) {
 }
 
 // L, V, N, Tx, Ty in world space
-float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq, out float p) {
+float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaSq) {
     vec3 H = normalize(L + V);
     float zetax = dot(H, Tx) / dot(H, N);
     float zetay = dot(H, Ty) / dot(H, N);
@@ -150,7 +143,7 @@ float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaS
     float zH = dot(H, N); // cos of facet normal zenith angle
     float zH2 = zH * zH;
 
-    /*float*/ p = exp(-0.5 * (zetax * zetax / sigmaSq.x + zetay * zetay / sigmaSq.y))
+    float p = exp(-0.5 * (zetax * zetax / sigmaSq.x + zetay * zetay / sigmaSq.y))
                 / (2.0 * M_PI * sqrt(sigmaSq.x * sigmaSq.y));
 
     float tanV = atan(dot(V, Ty), dot(V, Tx));
@@ -165,9 +158,8 @@ float reflectedSunRadiance(vec3 L, vec3 V, vec3 N, vec3 Tx, vec3 Ty, vec2 sigmaS
 
     zL = max(zL, 0.01);
     zV = max(zV, 0.01);
-	p /= ((1.0 + Lambda(zL, sigmaL2) + Lambda(zV, sigmaV2)) * zV * zH2 * zH2 * 4.0);
 
-    return fresnel * p;// / ((1.0 + Lambda(zL, sigmaL2) + Lambda(zV, sigmaV2)) * zV * zH2 * zH2 * 4.0);
+    return fresnel * p  / ((1.0 + Lambda(zL, sigmaL2) + Lambda(zV, sigmaV2)) * zV * zH2 * zH2 * 4.0);
 }
 
 // ---------------------------------------------------------------------------
@@ -292,7 +284,6 @@ void main() {
 	vec3 Rf = vec3(0.0);
 	vec3 Rs = vec3(0.0);
 	vec3 Ru = vec3(0.0);
-	float p = 1.0;
 
 #if defined(SEA_CONTRIB) || defined(SKY_CONTRIB)
 	float fresnel = 0.02 + 0.98 * meanFresnel(V, N, sigmaSq);
@@ -306,8 +297,7 @@ void main() {
 	gl_FragColor = vec4(0.0);
 
 #ifdef SUN_CONTRIB
-//	reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p);
-	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq, p) * Lsun;
+	Rs += reflectedSunRadiance(worldSunDir, V, N, Tx, Ty, sigmaSq) * Lsun;
 	gl_FragColor.rgb = Rs;
 #endif
 
@@ -333,8 +323,6 @@ void main() {
 
 	// get coverage
 	float W = whitecapCoverage(jacobian_scale,jm.x,jSigma2);
-//	if(isnan(W))
-//		W = 0.0;
 
 	// compute and add whitecap radiance
 	vec3 l = (Lsun * (max(dot(N, worldSunDir), 0.0)) + Esky) / M_PI;

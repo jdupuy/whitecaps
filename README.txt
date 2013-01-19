@@ -5,6 +5,11 @@ Real-time Animation and Rendering of Ocean Whitecaps
 ----------------------------------------------------
 
 
+Hardware requirements
+---------------------
+The demo requires an OpenGL3.3 (or later) GPU.
+
+
 Building the sources
 --------------------
 1 On Windows

@@ -71,7 +71,7 @@ enum {
 	PROGRAM_VARIANCES,
 	PROGRAM_FFTX,
 	PROGRAM_FFTY,
-	PROGRAM_GAUSS,
+	PROGRAM_WHITECAP_PRECOMPUTE,
 	PROGRAM_COUNT
 };
 
@@ -86,7 +86,7 @@ namespace {
 // Window Variables
 namespace window {
 const int width   = 600+220;
-const int height  = 500;
+const int height  = 600;
 } // namespace window
 
 // TW
@@ -166,7 +166,7 @@ float speed = 1.0f;
 bool loadStats=false;
 
 // FFT WAVES
-const int PASSES = 7; // number of passes needed for the FFT 6 -> 64, 7 -> 128, 8 -> 256, etc
+const int PASSES = 8; // number of passes needed for the FFT 6 -> 64, 7 -> 128, 8 -> 256, etc
 const int FFT_SIZE = 1 << PASSES; // size of the textures storing the waves in frequency and spatial domains
 float *spectrum12 = NULL;
 float *spectrum34 = NULL;
@@ -427,13 +427,13 @@ void loadPrograms(bool all)
 	glUseProgram(programs[PROGRAM_FFTY]->program);
 	glUniform1i(glGetUniformLocation(programs[PROGRAM_FFTY]->program, "butterflySampler"), TEXTURE_BUTTERFLY);
 
-	files[0] = "gaussz.glsl";
-	if (programs[PROGRAM_GAUSS] != NULL)
+	files[0] = "whitecap_precompute.glsl";
+	if (programs[PROGRAM_WHITECAP_PRECOMPUTE] != NULL)
 	{
-		delete programs[PROGRAM_GAUSS];
-		programs[PROGRAM_GAUSS] = NULL;
+		delete programs[PROGRAM_WHITECAP_PRECOMPUTE];
+		programs[PROGRAM_WHITECAP_PRECOMPUTE] = NULL;
 	}
-	programs[PROGRAM_GAUSS] = new Program(1, files);
+	programs[PROGRAM_WHITECAP_PRECOMPUTE] = new Program(1, files);
 
 	// Back to default pipeline
 	glUseProgram(0);
@@ -1077,7 +1077,7 @@ void redisplayFunc() {
 		vboParams.w = camera::theta;
 	}
 
-	glClearColor(1.0,1.0,1.0,1.0);
+	glClearColor(0.0,0.0,0.0,0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	vec4f sun = vec4f(sin(sunTheta) * cos(sunPhi), sin(sunTheta) * sin(sunPhi), cos(sunTheta), 0.0);
@@ -1118,9 +1118,9 @@ void redisplayFunc() {
 	// filtering
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, framebuffers[FRAMEBUFFER_GAUSS]);
 	glViewport(0, 0, FFT_SIZE, FFT_SIZE);
-	glUseProgram(programs[PROGRAM_GAUSS]->program);
-	glUniform1i(glGetUniformLocation(programs[PROGRAM_GAUSS]->program, "fftWavesSampler"), TEXTURE_FFT_PING);
-	glUniform4f(glGetUniformLocation(programs[PROGRAM_GAUSS]->program, "choppy"), choppy_factor0, choppy_factor1, choppy_factor2, choppy_factor3);
+	glUseProgram(programs[PROGRAM_WHITECAP_PRECOMPUTE]->program);
+	glUniform1i(glGetUniformLocation(programs[PROGRAM_WHITECAP_PRECOMPUTE]->program, "fftWavesSampler"), TEXTURE_FFT_PING);
+	glUniform4f(glGetUniformLocation(programs[PROGRAM_WHITECAP_PRECOMPUTE]->program, "choppy"), choppy_factor0, choppy_factor1, choppy_factor2, choppy_factor3);
 
 	drawQuad();
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -1413,7 +1413,7 @@ int main(int argc, char* argv[]) {
 	TwGLUTModifiersFunc(glutGetModifiers);
 
 	tw::bar = TwNewBar("HUD");
-	TwDefine(" HUD size='218 498' ");
+	TwDefine(" HUD size='218 598' ");
 	TwDefine(" HUD position='1 1' ");
 	TwDefine(" HUD color='100 0 0' ");
 	TwDefine(" HUD alpha=255 ");
@@ -1437,14 +1437,16 @@ int main(int argc, char* argv[]) {
 	TwAddVarCB(tw::bar, "Sea", TW_TYPE_BOOLCPP, setBool, getBool, &seaContrib, "true=ON false=OFF group=Lighting");
 	TwAddVarCB(tw::bar, "Clouds", TW_TYPE_BOOL8, setBool, getBool, &cloudLayer, "true=ON false=OFF group=Lighting");
 
-	TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Waves");
+	TwAddVarRW(tw::bar, "Time", TW_TYPE_BOOLCPP, &animate, "true=RUNNING false=PAUSED group=Animation ");
+	TwAddVarRW(tw::bar, "Speed", TW_TYPE_FLOAT, &speed, "min=-2.000 max=2.000 step=0.025 group=Animation");
 
+	TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Waves");
 	TwAddVarCB(tw::bar, "Wind speed", TW_TYPE_FLOAT, setFloat, getFloat, &WIND, "min=1.0 max=30.0 step=1.0 group=Waves");
 	TwAddVarCB(tw::bar, "Stats", TW_TYPE_BOOLCPP, setReload, getBool, &loadStats, "true=RELOAD false=OK group=Waves");
 	TwAddVarCB(tw::bar, "Amplitude", TW_TYPE_FLOAT, setFloat, getFloat, &A, "min=0.01 max=1000.0 step=0.01 group=Waves");
 	TwAddVarCB(tw::bar, "Inv. wave age", TW_TYPE_FLOAT, setFloat, getFloat, &OMEGA, "min=0.84 max=4.99 step=0.01 group=Waves");
 	TwAddVarCB(tw::bar, "Propagate", TW_TYPE_BOOL8, setPropagate, getBool, &propagate, "group=Waves true=true false=false");
-	TwDefine(" HUD/Waves opened=false ");
+//	TwDefine(" HUD/Waves opened=false ");
 
 	TwAddVarRW(tw::bar, "Enabled", TW_TYPE_BOOLCPP, &choppy, "group=Choppy_Waves");
 	TwAddVarRW(tw::bar, "tile1_factor", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Choppy_Waves");
@@ -1476,8 +1478,6 @@ int main(int argc, char* argv[]) {
 	TwAddVarRW(tw::bar, "Spectrum Linear", TW_TYPE_BOOL8, &show_spectrum_linear, "group=Spectrum");
 	TwDefine(" HUD/Spectrum opened=false ");
 
-	TwAddVarRW(tw::bar, "Time", TW_TYPE_BOOLCPP, &animate, "true=RUNNING false=PAUSED group=Animation ");
-	TwAddVarRW(tw::bar, "Speed", TW_TYPE_FLOAT, &speed, "min=-2.000 max=2.000 step=0.025 group=Animation");
 
 
 	for(GLuint i = 0; i < PROGRAM_COUNT; ++i)

@@ -85,8 +85,8 @@ Program*    programs[PROGRAM_COUNT];
 namespace {
 // Window Variables
 namespace window {
-int width   = 1024;
-int height  = 768;
+const int width   = 600+220;
+const int height  = 500;
 } // namespace window
 
 // TW
@@ -98,7 +98,7 @@ namespace tw
 // camera
 namespace camera
 {
-float z 	    = 0.2f;
+float z 	    = 2.2f;
 float velx		= 0.0f;
 float vely		= 0.0f;
 float velz		= 0.00f;
@@ -107,7 +107,7 @@ float y			= 0.0f;
 float theta 	= 0.0f;
 float phi 		= 0.0f;
 float fovy 		= 90.0f;
-float vel		= 5.0f;
+float vel		= 2.0f;
 }
 
 // app speed
@@ -163,9 +163,10 @@ float A = 1.0; // wave amplitude factor (should be one)
 const float cm = 0.23; // Eq 59
 const float km = 370.0; // Eq 59
 float speed = 1.0f;
+bool loadStats=false;
 
 // FFT WAVES
-const int PASSES = 8; // number of passes needed for the FFT 6 -> 64, 7 -> 128, 8 -> 256, etc
+const int PASSES = 7; // number of passes needed for the FFT 6 -> 64, 7 -> 128, 8 -> 256, etc
 const int FFT_SIZE = 1 << PASSES; // size of the textures storing the waves in frequency and spatial domains
 float *spectrum12 = NULL;
 float *spectrum34 = NULL;
@@ -336,7 +337,7 @@ void loadPrograms(bool all)
 	}
 	programs[PROGRAM_SKY] = new Program(2, files, options);
 	glUseProgram(programs[PROGRAM_SKY]->program);
-	glUniform1i(glGetUniformLocation(programs[PROGRAM_SKY]->program, "programs[PROGRAM_SKY]IrradianceSampler"), TEXTURE_IRRADIANCE);
+	glUniform1i(glGetUniformLocation(programs[PROGRAM_SKY]->program, "IrradianceSampler"), TEXTURE_IRRADIANCE);
 	glUniform1i(glGetUniformLocation(programs[PROGRAM_SKY]->program, "inscatterSampler"), TEXTURE_INSCATTER);
 	glUniform1i(glGetUniformLocation(programs[PROGRAM_SKY]->program, "transmittanceSampler"), TEXTURE_TRANSMITTANCE);
 	glUniform1i(glGetUniformLocation(programs[PROGRAM_SKY]->program, "skySampler"), TEXTURE_SKY);
@@ -438,16 +439,6 @@ void loadPrograms(bool all)
 	glUseProgram(0);
 }
 
-void TW_CALL getBool(void *value, void *clientData)
-{
-    *((bool*) value) = *((bool*) clientData);
-}
-
-void TW_CALL setBool(const void *value, void *clientData)
-{
-    *((bool*) clientData) = *((bool*) value);
-    loadPrograms(clientData == &cloudLayer);
-}
 
 
 // ----------------------------------------------------------------------------
@@ -469,8 +460,8 @@ void generateMesh()
     float horizon = tan(camera::theta / 180.0 * M_PI);
     float s = min(1.1f, 0.5f + horizon * 0.5f);
 
-    float vmargin = 0.3;
-    float hmargin = 0.3;
+    float vmargin = 0.1;
+    float hmargin = 0.1;
 
 //    vboParams = vec4f(window::width, window::height, gridSize, camera::theta);
     vec4f *data = new vec4f[int(ceil(window::height * (s + vmargin) / gridSize) + 5) * int(ceil(window::width * (1.0 + 2.0 * hmargin) / gridSize) + 5)];
@@ -616,7 +607,7 @@ void generateWavesSpectrum()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 0, GL_RGBA, GL_FLOAT, spectrum12);
     glActiveTexture(GL_TEXTURE0 + TEXTURE_SPECTRUM34);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 0, GL_RGBA, GL_FLOAT, spectrum34);
-    TwDefine("Parameters color='255 0 0'");
+    TwDefine(" HUD color='250 200 200' ");
 }
 
 float getSlopeVariance(float kx, float ky, float *spectrumSample)
@@ -682,7 +673,7 @@ void TW_CALL computeSlopeVarianceTex(void *unused)
 		drawQuad();
 	}
 
-	TwDefine("Parameters color='17 109 143'");
+	TwDefine(" HUD color='200 200 200' ");
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
 
@@ -701,7 +692,12 @@ int bitReverse(int i, int N)
 	while (M != 0)
 	{
 		j = (i & M) > M - 1;
+
+
 		Sum += j * W;
+
+
+
 		W *= 2;
 		M = M / 2;
 	}
@@ -855,6 +851,7 @@ void TW_CALL setFloat(const void *value, void *clientData)
 {
 	*((float*) clientData) = *((float*) value);
 	generateWavesSpectrum();
+	loadStats=true;
 }
 
 void TW_CALL getInt(void *value, void *clientData)
@@ -868,16 +865,32 @@ void TW_CALL setInt(const void *value, void *clientData)
 	generateWavesSpectrum();
 }
 
-void TW_CALL getBool2(void *value, void *clientData)
+
+void TW_CALL getBool(void *value, void *clientData)
 {
-	*((bool*) value) = *((bool*) clientData);
+    *((bool*) value) = *((bool*) clientData);
 }
 
-void TW_CALL setBool2(const void *value, void *clientData)
+void TW_CALL setBool(const void *value, void *clientData)
+{
+    *((bool*) clientData) = *((bool*) value);
+    loadPrograms(clientData == &cloudLayer);
+}
+
+void TW_CALL setPropagate(const void *value, void *clientData)
 {
 	*((bool*) clientData) = *((bool*) value);
 	generateWavesSpectrum();
 }
+
+void TW_CALL setReload(const void *value, void *clientData)
+{
+	if(loadStats) {
+		computeSlopeVarianceTex(NULL);
+		loadStats = false;
+	}
+}
+
 
 
 // ----------------------------------------------------------------------------
@@ -984,6 +997,7 @@ void load(int id)
 	in >> seaColor[3];
 	in >> hdrExposure;
 	in >> grid;
+
 	in >> animate;
 	in >> seaContrib;
 	in >> sunContrib;
@@ -1057,7 +1071,7 @@ void redisplayFunc() {
 	   vboParams.z != gridSize ||
 	   vboParams.w != camera::theta) {
 		generateMesh();
-		vboParams.x = window::width;
+		vboParams.x = window::width-220;
 		vboParams.y = window::height;
 		vboParams.z = gridSize;
 		vboParams.w = camera::theta;
@@ -1134,7 +1148,7 @@ void redisplayFunc() {
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glDrawBuffer(GL_BACK);
-	glViewport(0, 0, window::width, window::height);
+	glViewport(220, 0, window::width-220, window::height);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (show_spectrum)
@@ -1248,8 +1262,8 @@ void redisplayFunc() {
 
 
 void reshapeFunc(int x, int y) {
-	window::width = x;
-	window::height = y;
+//	window::width = x;
+//	window::height = y;
 	TwWindowSize(x, y);
 	glutPostRedisplay();
 }
@@ -1398,56 +1412,73 @@ int main(int argc, char* argv[]) {
 	TwInit(TW_OPENGL, NULL);
 	TwGLUTModifiersFunc(glutGetModifiers);
 
-	tw::bar = TwNewBar("Parameters");
-	TwDefine(" Parameters size='220 600' ");
+	tw::bar = TwNewBar("HUD");
+	TwDefine(" HUD size='218 498' ");
+	TwDefine(" HUD position='1 1' ");
+	TwDefine(" HUD color='100 0 0' ");
+	TwDefine(" HUD alpha=255 ");
+	TwDefine(" HUD text=dark ");
+//	TwDefine(" Parameters size='220 600' ");
 
-	TwAddVarRO(tw::bar, "Speed (ms)", TW_TYPE_DOUBLE, &appSpeed, "");
+	TwAddVarRO(tw::bar, "CPU time (ms)", TW_TYPE_DOUBLE, &appSpeed, "group=Perf");
+	TwAddVarRO(tw::bar, "GPU time (ms)", TW_TYPE_DOUBLE, &appSpeed, "group=Perf");
+	TwAddVarRW(tw::bar, "Shading", TW_TYPE_BOOLCPP, &normals, "false=Shaded true=Normals group=Rendering");
+	TwAddVarRW(tw::bar, "Show Wireframe", TW_TYPE_BOOL8, &grid, "group=Rendering");
+	TwAddVarRW(tw::bar, "Tess level", TW_TYPE_FLOAT, &gridSize, "min=1.0 max=16.0 step=1.0 group=Rendering");
+	TwAddVarRO(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Camera");
+	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Camera");
+	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Camera");
+	TwAddVarRW(tw::bar, "Exposure", TW_TYPE_FLOAT, &hdrExposure, "min=0.01 max=4.0 step=0.01 group=Camera");
+	TwAddVarCB(tw::bar, "Manual filter", TW_TYPE_BOOLCPP, setBool, getBool, &manualFilter, "group=Camera");
 
-	TwAddVarCB(tw::bar, "L1", TW_TYPE_FLOAT, setFloat, getFloat, &GRID1_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-	TwAddVarCB(tw::bar, "L2", TW_TYPE_FLOAT, setFloat, getFloat, &GRID2_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-	TwAddVarCB(tw::bar, "L3", TW_TYPE_FLOAT, setFloat, getFloat, &GRID3_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-	TwAddVarCB(tw::bar, "L4", TW_TYPE_FLOAT, setFloat, getFloat, &GRID4_SIZE, "min=1.0 max=50000.0 step=1.0 group=Spectrum");
-	TwAddVarCB(tw::bar, "Wind speed", TW_TYPE_FLOAT, setFloat, getFloat, &WIND, "min=1.0 max=30.0 step=1.0 group=Spectrum");
-	TwAddVarCB(tw::bar, "Inv. wave age", TW_TYPE_FLOAT, setFloat, getFloat, &OMEGA, "min=0.84 max=4.99 step=0.01 group=Spectrum");
-	TwAddVarCB(tw::bar, "Propagate", TW_TYPE_BOOL8, setBool2, getBool2, &propagate, "group=Spectrum");
-	TwAddVarCB(tw::bar, "Amplitude", TW_TYPE_FLOAT, setFloat, getFloat, &A, "min=0.01 max=1000.0 step=0.01 group=Spectrum");
-	TwAddVarRW(tw::bar, "Choppy", TW_TYPE_BOOLCPP, &choppy, "group=Spectrum");
-	TwAddVarRW(tw::bar, "ChoppyFactor0", TW_TYPE_FLOAT, &choppy_factor0, "min=0.0 max=100.0 step=0.1 group=Spectrum");
-	TwAddVarRW(tw::bar, "ChoppyFactor1", TW_TYPE_FLOAT, &choppy_factor1, "min=0.0 max=100.0 step=0.1 group=Spectrum");
-	TwAddVarRW(tw::bar, "ChoppyFactor3", TW_TYPE_FLOAT, &choppy_factor2, "min=0.0 max=100.0 step=0.1 group=Spectrum");
-	TwAddVarRW(tw::bar, "ChoppyFactor4", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Spectrum");
-	TwAddButton(tw::bar, "Generate", computeSlopeVarianceTex, NULL, "group=Spectrum");
+	TwAddVarCB(tw::bar, "Sun", TW_TYPE_BOOLCPP, setBool, getBool, &sunContrib, "true=ON false=OFF group=Lighting");
+	TwAddVarCB(tw::bar, "Sky", TW_TYPE_BOOLCPP, setBool, getBool, &skyContrib, "true=ON false=OFF group=Lighting");
+	TwAddVarCB(tw::bar, "Whitecaps", TW_TYPE_BOOLCPP, setBool, getBool, &foamContrib, "true=ON false=OFF group=Lighting");
+	TwAddVarCB(tw::bar, "Sea", TW_TYPE_BOOLCPP, setBool, getBool, &seaContrib, "true=ON false=OFF group=Lighting");
+	TwAddVarCB(tw::bar, "Clouds", TW_TYPE_BOOL8, setBool, getBool, &cloudLayer, "true=ON false=OFF group=Lighting");
 
-	TwAddVarRW(tw::bar, "Altitude", TW_TYPE_FLOAT, &camera::z, "min=-10.0 max=8000 group=Rendering");
-	TwAddVarRO(tw::bar, "Theta", TW_TYPE_FLOAT, &camera::theta, "group=Rendering");
-	TwAddVarRO(tw::bar, "Phi", TW_TYPE_FLOAT, &camera::phi, "group=Rendering");
-	TwAddVarRW(tw::bar, "Grid size", TW_TYPE_FLOAT, &gridSize, "min=1.0 max=16.0 step=1.0 group=Rendering");
-	TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Rendering");
-	TwAddVarRW(tw::bar, "Exposure", TW_TYPE_FLOAT, &hdrExposure, "min=0.01 max=4.0 step=0.01 group=Rendering");
-	TwAddVarRW(tw::bar, "Animation", TW_TYPE_BOOLCPP, &animate, "group=Rendering");
-	TwAddVarRW(tw::bar, "Speed", TW_TYPE_FLOAT, &speed, "group=Rendering min=-2.000 max=2.000 step=0.025");
-	TwAddVarRW(tw::bar, "Grid", TW_TYPE_BOOL8, &grid, "group=Rendering");
-	TwAddVarRW(tw::bar, "Spectrum_", TW_TYPE_BOOL8, &show_spectrum, "label=Spectrum group=Rendering");
-	TwAddVarRW(tw::bar, "Spectrum Zoom", TW_TYPE_FLOAT, &show_spectrum_zoom, "min=0.0 max=1.0 step=0.01 group=Rendering");
-	TwAddVarRW(tw::bar, "Spectrum Linear", TW_TYPE_BOOL8, &show_spectrum_linear, "group=Rendering");
-	TwAddVarRW(tw::bar, "Normals", TW_TYPE_BOOLCPP, &normals, "group=Rendering");
-	TwAddVarCB(tw::bar, "Sea", TW_TYPE_BOOLCPP, setBool, getBool, &seaContrib, "group=Rendering");
+	TwAddVarRW(tw::bar, "Sea color", TW_TYPE_COLOR4F, &seaColor, "group=Waves");
 
-	TwAddVarCB(tw::bar, "Sun", TW_TYPE_BOOLCPP, setBool, getBool, &sunContrib, "group=Rendering");
-	TwAddVarCB(tw::bar, "Sky", TW_TYPE_BOOLCPP, setBool, getBool, &skyContrib, "group=Rendering");
-	TwAddVarCB(tw::bar, "Whitecaps", TW_TYPE_BOOLCPP, setBool, getBool, &foamContrib, "group=Rendering");
-	TwAddVarCB(tw::bar, "Manual filter", TW_TYPE_BOOLCPP, setBool, getBool, &manualFilter, "group=Rendering");
+	TwAddVarCB(tw::bar, "Wind speed", TW_TYPE_FLOAT, setFloat, getFloat, &WIND, "min=1.0 max=30.0 step=1.0 group=Waves");
+	TwAddVarCB(tw::bar, "Stats", TW_TYPE_BOOLCPP, setReload, getBool, &loadStats, "true=RELOAD false=OK group=Waves");
+	TwAddVarCB(tw::bar, "Amplitude", TW_TYPE_FLOAT, setFloat, getFloat, &A, "min=0.01 max=1000.0 step=0.01 group=Waves");
+	TwAddVarCB(tw::bar, "Inv. wave age", TW_TYPE_FLOAT, setFloat, getFloat, &OMEGA, "min=0.84 max=4.99 step=0.01 group=Waves");
+	TwAddVarCB(tw::bar, "Propagate", TW_TYPE_BOOL8, setPropagate, getBool, &propagate, "group=Waves true=true false=false");
+	TwDefine(" HUD/Waves opened=false ");
 
-	TwAddVarRW(tw::bar, "JScale", TW_TYPE_FLOAT, &jacobian_scale, "min=-50.0 max=50.0 step=0.25 group=Whitecap");
+	TwAddVarRW(tw::bar, "Enabled", TW_TYPE_BOOLCPP, &choppy, "group=Choppy_Waves");
+	TwAddVarRW(tw::bar, "tile1_factor", TW_TYPE_FLOAT, &choppy_factor3, "min=0.0 max=100.0 step=0.1 group=Choppy_Waves");
+	TwAddVarRW(tw::bar, "tile2_factor", TW_TYPE_FLOAT, &choppy_factor2, "min=0.0 max=100.0 step=0.1 group=Choppy_Waves");
+	TwAddVarRW(tw::bar, "tile3_factor", TW_TYPE_FLOAT, &choppy_factor1, "min=0.0 max=100.0 step=0.1 group=Choppy_Waves");
+	TwAddVarRW(tw::bar, "tile4_factor", TW_TYPE_FLOAT, &choppy_factor0, "min=0.0 max=100.0 step=0.1 group=Choppy_Waves");
+	TwDefine(" HUD/Choppy_Waves opened=false ");
 
-	TwAddVarRW(tw::bar, "Octaves", TW_TYPE_FLOAT, &octaves, "min=1.0 max=16.0 step=1.0 group=Clouds");
-	TwAddVarRW(tw::bar, "Lacunarity", TW_TYPE_FLOAT, &lacunarity, "min=0.1 max=3.0 step=0.1 group=Clouds");
-	TwAddVarRW(tw::bar, "Gain", TW_TYPE_FLOAT, &gain, "min=0.01 max=2.0 step=0.01 group=Clouds");
-	TwAddVarRW(tw::bar, "Norm", TW_TYPE_FLOAT, &norm, "min=0.01 max=1.0 step=0.01 group=Clouds");
-	TwAddVarRW(tw::bar, "Clamp1", TW_TYPE_FLOAT, &clamp1, "min=-1.0 max=1.0 step=0.01 group=Clouds");
-	TwAddVarRW(tw::bar, "Clamp2", TW_TYPE_FLOAT, &clamp2, "min=-1.0 max=1.0 step=0.01 group=Clouds");
-	TwAddVarCB(tw::bar, "Enable1", TW_TYPE_BOOL8, setBool, getBool, &cloudLayer, "label=Enable group=Clouds");
-	TwAddVarRW(tw::bar, "Color", TW_TYPE_COLOR4F, &cloudColor, "group=Clouds");
+	TwAddVarRW(tw::bar, "Coverage", TW_TYPE_FLOAT, &jacobian_scale, "min=-50.0 max=50.0 step=0.25 group=Whitecap_Params");
+//	TwDefine(" HUD/Whitecap_Params opened=false ");
+	
+	TwAddVarRW(tw::bar, "Octaves", TW_TYPE_FLOAT, &octaves, "min=1.0 max=16.0 step=1.0 group=Cloud_Params");
+	TwAddVarRW(tw::bar, "Lacunarity", TW_TYPE_FLOAT, &lacunarity, "min=0.1 max=3.0 step=0.1 group=Cloud_Params");
+	TwAddVarRW(tw::bar, "Gain", TW_TYPE_FLOAT, &gain, "min=0.01 max=2.0 step=0.01 group=Cloud_Params");
+	TwAddVarRW(tw::bar, "Norm", TW_TYPE_FLOAT, &norm, "min=0.01 max=1.0 step=0.01 group=Cloud_Params");
+	TwAddVarRW(tw::bar, "Clamp1", TW_TYPE_FLOAT, &clamp1, "min=-1.0 max=1.0 step=0.01 group=Cloud_Params");
+	TwAddVarRW(tw::bar, "Clamp2", TW_TYPE_FLOAT, &clamp2, "min=-1.0 max=1.0 step=0.01 group=Cloud_Params");
+	TwAddVarRW(tw::bar, "Color", TW_TYPE_COLOR4F, &cloudColor, "group=Cloud_Params");
+	TwDefine(" HUD/Cloud_Params opened=false ");
+
+	TwAddVarCB(tw::bar, "L1", TW_TYPE_FLOAT, setFloat, getFloat, &GRID1_SIZE, "min=1.0 max=50000.0 step=1.0 group=Wave_Patterns");
+	TwAddVarCB(tw::bar, "L2", TW_TYPE_FLOAT, setFloat, getFloat, &GRID2_SIZE, "min=1.0 max=50000.0 step=1.0 group=Wave_Patterns");
+	TwAddVarCB(tw::bar, "L3", TW_TYPE_FLOAT, setFloat, getFloat, &GRID3_SIZE, "min=1.0 max=50000.0 step=1.0 group=Wave_Patterns");
+	TwAddVarCB(tw::bar, "L4", TW_TYPE_FLOAT, setFloat, getFloat, &GRID4_SIZE, "min=1.0 max=50000.0 step=1.0 group=Wave_Patterns");
+	TwDefine(" HUD/Wave_Patterns opened=false ");
+
+	TwAddVarRW(tw::bar, "Show", TW_TYPE_BOOL8, &show_spectrum, "true=ON false=OFF group=Spectrum");
+	TwAddVarRW(tw::bar, "Spectrum Zoom", TW_TYPE_FLOAT, &show_spectrum_zoom, "min=0.0 max=1.0 step=0.01 group=Spectrum");
+	TwAddVarRW(tw::bar, "Spectrum Linear", TW_TYPE_BOOL8, &show_spectrum_linear, "group=Spectrum");
+	TwDefine(" HUD/Spectrum opened=false ");
+
+	TwAddVarRW(tw::bar, "Time", TW_TYPE_BOOLCPP, &animate, "true=RUNNING false=PAUSED group=Animation ");
+	TwAddVarRW(tw::bar, "Speed", TW_TYPE_FLOAT, &speed, "min=-2.000 max=2.000 step=0.025 group=Animation");
+
 
 	for(GLuint i = 0; i < PROGRAM_COUNT; ++i)
 		programs[i] = NULL;
@@ -1512,6 +1543,7 @@ int main(int argc, char* argv[]) {
 
 	float maxAnisotropy = 1.0f;
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
+	maxAnisotropy = 2.0f;
 
 	glActiveTexture(GL_TEXTURE0 + TEXTURE_SKY);
 	glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_SKY]);
@@ -1599,7 +1631,7 @@ int main(int argc, char* argv[]) {
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+		glTexParameterf(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
 		glTexImage3D(GL_TEXTURE_2D_ARRAY_EXT, 0, GL_RGBA16F_ARB, FFT_SIZE, FFT_SIZE, 8, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D_ARRAY_EXT);
 

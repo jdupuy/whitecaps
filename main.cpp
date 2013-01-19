@@ -98,14 +98,14 @@ namespace tw
 // camera
 namespace camera
 {
-float z 	    = 2.2f;
+float z 	    = 3.5f;
 float velx		= 0.0f;
 float vely		= 0.0f;
 float velz		= 0.00f;
 float x			= 0.0f;
 float y			= 0.0f;
-float theta 	= 0.0f;
-float phi 		= 0.0f;
+float theta 	= 27.0f;
+float phi 		= -625.f;
 float fovy 		= 90.0f;
 float vel		= 2.0f;
 }
@@ -131,8 +131,8 @@ float sunPhi = 0.0;
 float gridSize = 4.0f;
 
 // render ing options
-float seaColor[4] = {8.0 / 255.0, 124.0 / 255.0, 152.0 / 255.0, 0.15};
-float hdrExposure = 0.4;
+float seaColor[4] = {11.0 / 255.0, 121.0 / 255.0, 49.0 / 255.0, 140 / 255.0};
+float hdrExposure = 1.05;
 bool grid = false;
 bool animate = true;
 bool seaContrib = true;
@@ -145,21 +145,21 @@ float show_spectrum_zoom = 1.0;
 bool show_spectrum_linear = false;
 bool normals = false;
 bool choppy = true;
-float choppy_factor0 = 2.4f;	// Control Choppiness
-float choppy_factor1 = 2.4f;	// Control Choppiness
-float choppy_factor2 = 2.4f;	// Control Choppiness
-float choppy_factor3 = 2.4f;	// Control Choppiness
+float choppy_factor0 = 2.3f;	// Control Choppiness
+float choppy_factor1 = 2.1f;	// Control Choppiness
+float choppy_factor2 = 1.3f;	// Control Choppiness
+float choppy_factor3 = 0.9f;	// Control Choppiness
 
 // WAVES SPECTRUM
 const int N_SLOPE_VARIANCE = 4; // size of the 3d texture containing precomputed filtered slope variances
-float GRID1_SIZE = 5409.0; // size in meters (i.e. in spatial domain) of the first grid
-float GRID2_SIZE = 503.0; // size in meters (i.e. in spatial domain) of the second grid
-float GRID3_SIZE = 31.0; //51 // size in meters (i.e. in spatial domain) of the third grid
-float GRID4_SIZE = 5.0; // size in meters (i.e. in spatial domain) of the fourth grid
-float WIND = 5.0; // wind speed in meters per second (at 10m above surface)
-float OMEGA = 0.84f; // sea state (inverse wave age)
+float GRID1_SIZE = 893.0; // size in meters (i.e. in spatial domain) of the first grid
+float GRID2_SIZE = 101.0; // size in meters (i.e. in spatial domain) of the second grid
+float GRID3_SIZE = 21.0; //51 // size in meters (i.e. in spatial domain) of the third grid
+float GRID4_SIZE = 11.0; // size in meters (i.e. in spatial domain) of the fourth grid
+float WIND = 12.0; // wind speed in meters per second (at 10m above surface)
+float OMEGA = 2.0f; // sea state (inverse wave age)
 bool propagate = true; // wave propagation?
-float A = 1.0; // wave amplitude factor (should be one)
+float A = 2.0; // wave amplitude factor (should be one)
 const float cm = 0.23; // Eq 59
 const float km = 370.0; // Eq 59
 float speed = 1.0f;
@@ -172,7 +172,7 @@ float *spectrum12 = NULL;
 float *spectrum34 = NULL;
 
 // Foam
-float jacobian_scale = -0.1f;
+float jacobian_scale = 0.2f;
 
 #ifdef _BENCH
 std::ofstream gnuplot("perf.dat", std::ofstream::out);

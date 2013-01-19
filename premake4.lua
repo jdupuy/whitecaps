@@ -42,7 +42,7 @@ solution "OpenGL"
 -- Linux x64 platform gmake
 		configuration {"linux", "gmake", "x64"}
 			linkoptions {
-			"-Wl,-rpath,./lib/linux/lin64 -L./lib/linux/lin64 -lGLEW -lglut -lAntTweakBar"
+			"-Wl,-rpath,./lib/linux/lin64 -L./lib/linux/lin64 -lGLEW -lglut -lAntTweakBar -lGL"
 			}
 			libdirs {
 			"./lib/linux/lin64"

@@ -36,10 +36,10 @@ void main() {
 	// store Jacobian coeff value and variance
 	vec4 Jxx = choppy*texture2DArray(fftWavesSampler, vec3(uv, LAYER_JACOBIAN_XX));
 	vec4 Jyy = choppy*texture2DArray(fftWavesSampler, vec3(uv, LAYER_JACOBIAN_YY));
-	vec4 Jxy = choppy*choppy*texture2DArray(fftWavesSampler, vec3(uv, LAYER_JACOBIAN_XY));
+	vec4 Jxy = choppy*texture2DArray(fftWavesSampler, vec3(uv, LAYER_JACOBIAN_XY));
 
 	// Store partial jacobians
-	vec4 res = 0.25 + Jxx + Jyy + choppy*Jxx*Jyy - Jxy*Jxy;
+	vec4 res = 0.25 + Jxx + Jyy + Jxx*Jyy - Jxy*Jxy;
 	vec4 res2 = res*res;
 	gl_FragData[2] = vec4(res.x, res2.x, res.y, res2.y);
 	gl_FragData[3] = vec4(res.z, res2.z, res.w, res2.w);
